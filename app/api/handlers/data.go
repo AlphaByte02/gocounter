@@ -1,17 +1,52 @@
 package handlers
 
-import "github.com/gofiber/fiber/v3"
+import (
+	db "main/app/pkg/db/sqlc"
+
+	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
+)
 
 func GetData(c fiber.Ctx) error {
 	return nil
 }
 
 func ListData(c fiber.Ctx) error {
-	return nil
+	Q := c.Context().Value("db").(*db.Queries)
+
+	data, err := Q.ListData(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   err.Error(),
+		})
+	}
+
+	return c.JSON(data)
 }
 
 func CreateData(c fiber.Ctx) error {
-	return nil
+	Q := c.Context().Value("db").(*db.Queries)
+
+	var body db.CreateDataParams
+	err := c.Bind().Body(&body)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   err.Error(),
+		})
+	}
+
+	body.ID, _ = uuid.NewV7()
+	counter, err := Q.CreateData(c.Context(), body)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   err.Error(),
+		})
+	}
+
+	return c.JSON(counter)
 }
 
 func UpdateData(c fiber.Ctx) error {

@@ -1,9 +1,13 @@
 {
+    "eslint.useFlatConfig": true,
+
     "go.formatTool": "custom",
     "go.alternateTools": {
         "customFormatter": "golines"
     },
     "go.formatFlags": ["-m", "120"],
     "go.inlayHints.constantValues": true,
-    "eslint.useFlatConfig": true
+
+    "Prettier-SQL.SQLFlavourOverride": "postgresql",
+    "Prettier-SQL.keywordCase": "preserve"
 }

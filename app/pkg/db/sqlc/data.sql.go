@@ -9,11 +9,64 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const createData = `-- name: CreateData :one
+INSERT INTO
+    data (id, counter_id, value, recorded_at)
+VALUES
+    ($1, $2, $3, $4)
+RETURNING
+    id, counter_id, value, recorded_at, created_at, updated_at
+`
+
+type CreateDataParams struct {
+	ID         uuid.UUID          `json:"id"`
+	CounterID  uuid.UUID          `json:"counter_id"`
+	Value      int32              `json:"value"`
+	RecordedAt pgtype.Timestamptz `json:"recorded_at"`
+}
+
+func (q *Queries) CreateData(ctx context.Context, arg CreateDataParams) (Datum, error) {
+	row := q.db.QueryRow(ctx, createData,
+		arg.ID,
+		arg.CounterID,
+		arg.Value,
+		arg.RecordedAt,
+	)
+	var i Datum
+	err := row.Scan(
+		&i.ID,
+		&i.CounterID,
+		&i.Value,
+		&i.RecordedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const deleteData = `-- name: DeleteData :exec
+DELETE FROM DATA
+WHERE
+    id = $1
+`
+
+func (q *Queries) DeleteData(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteData, id)
+	return err
+}
+
 const getData = `-- name: GetData :one
-SELECT id, counter_id, value, recorded_at, created_at, updated_at FROM data
-WHERE id = $1 LIMIT 1
+SELECT
+    id, counter_id, value, recorded_at, created_at, updated_at
+FROM
+    DATA
+WHERE
+    id = $1
+LIMIT
+    1
 `
 
 func (q *Queries) GetData(ctx context.Context, id uuid.UUID) (Datum, error) {
@@ -31,8 +84,12 @@ func (q *Queries) GetData(ctx context.Context, id uuid.UUID) (Datum, error) {
 }
 
 const listData = `-- name: ListData :many
-SELECT id, counter_id, value, recorded_at, created_at, updated_at FROM data
-ORDER BY id
+SELECT
+    id, counter_id, value, recorded_at, created_at, updated_at
+FROM
+    DATA
+ORDER BY
+    id
 `
 
 func (q *Queries) ListData(ctx context.Context) ([]Datum, error) {
@@ -63,13 +120,58 @@ func (q *Queries) ListData(ctx context.Context) ([]Datum, error) {
 }
 
 const listDataByCounter = `-- name: ListDataByCounter :many
-SELECT id, counter_id, value, recorded_at, created_at, updated_at FROM data
-WHERE counter_id = $1
-ORDER BY id
+SELECT
+    data.id, data.counter_id, data.value, data.recorded_at, data.created_at, data.updated_at
+FROM
+    DATA
+    JOIN counters ON data.counter_id = counters.id
+WHERE
+    counter_id = $1
+    AND recorded_at >= counters.soft_reset
+ORDER BY
+    data.id
 `
 
 func (q *Queries) ListDataByCounter(ctx context.Context, counterID uuid.UUID) ([]Datum, error) {
 	rows, err := q.db.Query(ctx, listDataByCounter, counterID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Datum
+	for rows.Next() {
+		var i Datum
+		if err := rows.Scan(
+			&i.ID,
+			&i.CounterID,
+			&i.Value,
+			&i.RecordedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listDataByCounterGlobal = `-- name: ListDataByCounterGlobal :many
+SELECT
+    id, counter_id, value, recorded_at, created_at, updated_at
+FROM
+    DATA
+WHERE
+    counter_id = $1
+ORDER BY
+    id
+`
+
+func (q *Queries) ListDataByCounterGlobal(ctx context.Context, counterID uuid.UUID) ([]Datum, error) {
+	rows, err := q.db.Query(ctx, listDataByCounterGlobal, counterID)
 	if err != nil {
 		return nil, err
 	}

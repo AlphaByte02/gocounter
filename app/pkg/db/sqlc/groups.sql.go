@@ -12,8 +12,14 @@ import (
 )
 
 const getGroup = `-- name: GetGroup :one
-SELECT id, name, created_at, updated_at FROM groups
-WHERE id = $1 LIMIT 1
+SELECT
+    id, name, created_at, updated_at
+FROM
+    GROUPS
+WHERE
+    id = $1
+LIMIT
+    1
 `
 
 func (q *Queries) GetGroup(ctx context.Context, id uuid.UUID) (Group, error) {
@@ -29,8 +35,12 @@ func (q *Queries) GetGroup(ctx context.Context, id uuid.UUID) (Group, error) {
 }
 
 const listGroups = `-- name: ListGroups :many
-SELECT id, name, created_at, updated_at FROM groups
-ORDER BY id
+SELECT
+    id, name, created_at, updated_at
+FROM
+    GROUPS
+ORDER BY
+    id
 `
 
 func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {

@@ -1,7 +1,7 @@
 import { CssBaseline, ThemeProvider, createTheme, responsiveFontSizes } from "@mui/material";
-import { Outlet } from "react-router-dom";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { Outlet } from "react-router";
 
 import "dayjs/locale/it";
 

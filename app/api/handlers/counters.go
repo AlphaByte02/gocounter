@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	db "main/app/pkg/db/sqlc"
 
 	"github.com/gofiber/fiber/v3"
@@ -12,7 +11,7 @@ func GetCounter(c fiber.Ctx) error {
 	Q := c.Context().Value("db").(*db.Queries)
 
 	counterID, _ := fiber.Convert(c.Params("id"), uuid.Parse)
-	counter, err := Q.GetCounter(context.Background(), counterID)
+	counter, err := Q.GetCounter(c.Context(), counterID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -26,8 +25,20 @@ func GetCounter(c fiber.Ctx) error {
 func GetCounterData(c fiber.Ctx) error {
 	Q := c.Context().Value("db").(*db.Queries)
 
-	counterID, _ := fiber.Convert(c.Params("id"), uuid.Parse)
-	data, err := Q.ListDataByCounter(context.Background(), counterID)
+	counterID, err := fiber.Convert(c.Params("id"), uuid.Parse)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg":   err.Error(),
+		})
+	}
+
+	var data []db.Datum
+	if fiber.Query(c, "global", false) {
+		data, err = Q.ListDataByCounterGlobal(c.Context(), counterID)
+	} else {
+		data, err = Q.ListDataByCounter(c.Context(), counterID)
+	}
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -42,7 +53,19 @@ func GetCounterStats(c fiber.Ctx) error {
 	Q := c.Context().Value("db").(*db.Queries)
 
 	counterID, _ := fiber.Convert(c.Params("id"), uuid.Parse)
-	data, err := Q.ListDataByCounter(context.Background(), counterID)
+	if fiber.Query(c, "global", false) {
+		stats, err := Q.GetCounterStatsGlobal(c.Context(), counterID)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": true,
+				"msg":   err.Error(),
+			})
+		}
+
+		return c.JSON(stats)
+	}
+
+	stats, err := Q.GetCounterStats(c.Context(), counterID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -50,13 +73,14 @@ func GetCounterStats(c fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(data)
+	return c.JSON(stats)
+
 }
 
 func ListCounter(c fiber.Ctx) error {
 	Q := c.Context().Value("db").(*db.Queries)
 
-	counters, err := Q.ListCounters(context.Background())
+	counters, err := Q.ListCounters(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -82,7 +106,7 @@ func CreateCounter(c fiber.Ctx) error {
 	}
 
 	newCounterID, _ := uuid.NewV7()
-	counter, err := Q.CreateCounter(context.Background(), db.CreateCounterParams{ID: newCounterID, Name: body.Name})
+	counter, err := Q.CreateCounter(c.Context(), db.CreateCounterParams{ID: newCounterID, Name: body.Name})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -103,7 +127,7 @@ func UpdateCounter(c fiber.Ctx) error {
 	}{}
 	c.Bind().Body(body)
 
-	counter, err := Q.UpdateCounter(context.Background(), db.UpdateCounterParams{ID: counterID, Name: body.Name})
+	counter, err := Q.UpdateCounter(c.Context(), db.UpdateCounterParams{ID: counterID, Name: body.Name})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -118,7 +142,7 @@ func DeleteCounter(c fiber.Ctx) error {
 	Q := c.Context().Value("db").(*db.Queries)
 
 	counterID, _ := fiber.Convert(c.Params("id"), uuid.Parse)
-	err := Q.DeleteCounter(context.Background(), counterID)
+	err := Q.DeleteCounter(c.Context(), counterID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,

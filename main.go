@@ -11,25 +11,36 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/logger"
 	"github.com/gofiber/fiber/v3/middleware/static"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
 	InitConfigs()
 
-	ctx := context.Background()
-
 	DB_URI := Configs.String("db.uri")
 	if DB_URI == "" {
 		panic(errors.New("'db.uri' may not be empty"))
 	}
-	conn, err := pgx.Connect(ctx, DB_URI)
+	config, err := pgxpool.ParseConfig(DB_URI)
 	if err != nil {
-		panic(err)
+		log.Fatalf("Impossibile leggere il DSN: %v", err)
 	}
-	defer conn.Close(ctx)
+	// config.MaxConns = int32(max(10, runtime.NumCPU() * 2))
+	log.Printf("Impostazione pgxpool MaxConns a: %d", config.MaxConns)
 
-	queries := db.New(conn)
+	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	if err != nil {
+		log.Fatalf("Impossibile creare il pool pgx: %v", err)
+	}
+	defer pool.Close()
+
+	err = pool.Ping(context.Background())
+	if err != nil {
+		log.Fatalf("Impossibile fare il ping del database via pool: %v", err)
+	}
+	log.Println("Connessione al database (via pool) riuscita!")
+
+	queries := db.New(pool)
 
 	proxyHeader := Configs.String("general.proxyHeader")
 	app := fiber.New(fiber.Config{

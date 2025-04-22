@@ -116,7 +116,7 @@ const Counter = ({ id, name, avgDisplay = "numeric", global = false, onEdit }: C
 
     const setStats = useCallback(() => {
         axios
-            .get(`/api/v1/counters/${id}/stats`, { params: { global: global } })
+            .get(`/api/counters/${id}/stats`, { params: { global: global } })
             .then(({ data }) => {
                 setCount(data.total);
                 setAvg(data.avg);
@@ -144,7 +144,7 @@ const Counter = ({ id, name, avgDisplay = "numeric", global = false, onEdit }: C
         }
 
         axios
-            .post("/api/v1/datas", values)
+            .post("/api/data", values)
             .then(() => setStats())
             .catch(() => {})
             .finally(() => {

@@ -12,8 +12,14 @@ import (
 )
 
 const getUser = `-- name: GetUser :one
-SELECT id, username, password, created_at, updated_at FROM users
-WHERE id = $1 LIMIT 1
+SELECT
+    id, username, password, created_at, updated_at
+FROM
+    users
+WHERE
+    id = $1
+LIMIT
+    1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
@@ -30,8 +36,12 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, username, password, created_at, updated_at FROM users
-ORDER BY id
+SELECT
+    id, username, password, created_at, updated_at
+FROM
+    users
+ORDER BY
+    id
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {

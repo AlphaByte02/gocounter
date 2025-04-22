@@ -1,5 +1,5 @@
-import type { ReactElement } from "react";
 import type { ICounter, IData } from "@lib/models";
+import type { ReactElement } from "react";
 
 import {
     Timeline,
@@ -28,19 +28,19 @@ function Feed() {
     useEffect(() => {
         async function setup() {
             await axios
-                .get("/api/v1/counters")
+                .get("/api/counters")
                 .then(({ data }: { data: ICounter[] }) =>
                     setCounters(data.reduce((pv, cv) => ({ ...pv, [cv.id]: cv.name }), {}))
                 )
                 .catch(() => {});
 
             axios
-                .get("/api/v1/datas?o=-createdAt&limit=200")
+                .get("/api/data?o=-recorded_at&limit=200")
                 .then(({ data: rd }: { data: IData[] }) => {
                     const newdatas: IDatas = {};
 
                     for (const data of rd) {
-                        const label = new Date(data.createdAt).toLocaleDateString("it");
+                        const label = new Date(data.recorded_at).toLocaleDateString("it");
                         const oldd = newdatas[label];
                         if (!oldd) {
                             newdatas[label] = [];
@@ -64,20 +64,20 @@ function Feed() {
             if (lr) {
                 return (
                     <>
-                        <span style={{ color: item.number > 0 ? "lightgreen" : "red" }}>
-                            {item.number > 0 ? "⇡" : "⇣"}
+                        <span style={{ color: item.value > 0 ? "lightgreen" : "red" }}>
+                            {item.value > 0 ? "⇡" : "⇣"}
                         </span>{" "}
-                        <b>{new Date(item.createdAt).toLocaleTimeString("it")}</b> -{" "}
-                        {counters[item.counterRef] || item.counterRef}
+                        <b>{new Date(item.recorded_at).toLocaleTimeString("it")}</b> -{" "}
+                        {counters[item.counter_id] || item.counter_id}
                     </>
                 );
             } else {
                 return (
                     <>
-                        {counters[item.counterRef] || item.counterRef} -{" "}
-                        <b>{new Date(item.createdAt).toLocaleTimeString("it")}</b>{" "}
-                        <span style={{ color: item.number > 0 ? "lightgreen" : "red" }}>
-                            {item.number > 0 ? "⇡" : "⇣"}
+                        {counters[item.counter_id] || item.counter_id} -{" "}
+                        <b>{new Date(item.recorded_at).toLocaleTimeString("it")}</b>{" "}
+                        <span style={{ color: item.value > 0 ? "lightgreen" : "red" }}>
+                            {item.value > 0 ? "⇡" : "⇣"}
                         </span>
                     </>
                 );

@@ -9,16 +9,15 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createCounter = `-- name: CreateCounter :one
-INSERT INTO counters (
-  id, user_id, name
-) VALUES (
-  $1, $2, $3
-)
-RETURNING id, user_id, name, soft_reset, created_at, updated_at
+INSERT INTO
+  counters (id, user_id, name)
+VALUES
+  ($1, $2, $3)
+RETURNING
+  id, user_id, name, soft_reset, created_at, updated_at
 `
 
 type CreateCounterParams struct {
@@ -42,7 +41,9 @@ func (q *Queries) CreateCounter(ctx context.Context, arg CreateCounterParams) (C
 }
 
 const deleteCounter = `-- name: DeleteCounter :exec
-DELETE FROM counters WHERE id = $1
+DELETE FROM counters
+WHERE
+  id = $1
 `
 
 func (q *Queries) DeleteCounter(ctx context.Context, id uuid.UUID) error {
@@ -51,8 +52,14 @@ func (q *Queries) DeleteCounter(ctx context.Context, id uuid.UUID) error {
 }
 
 const getCounter = `-- name: GetCounter :one
-SELECT id, user_id, name, soft_reset, created_at, updated_at FROM counters
-WHERE id = $1 LIMIT 1
+SELECT
+  id, user_id, name, soft_reset, created_at, updated_at
+FROM
+  counters
+WHERE
+  id = $1
+LIMIT
+  1
 `
 
 func (q *Queries) GetCounter(ctx context.Context, id uuid.UUID) (Counter, error) {
@@ -70,47 +77,110 @@ func (q *Queries) GetCounter(ctx context.Context, id uuid.UUID) (Counter, error)
 }
 
 const getCounterStats = `-- name: GetCounterStats :one
+WITH
+  Aggr AS (
+    SELECT
+      SUM(VALUE)       AS total,
+      MIN(recorded_at) AS first_date
+    FROM
+      data
+      JOIN counters ON data.counter_id = counters.id
+    WHERE
+      counter_id = $1
+      AND recorded_at >= counters.soft_reset
+  ),
+  TimeCalc AS (
+    SELECT
+      total,
+      first_date,
+      CEIL(
+        EXTRACT(
+          epoch
+          FROM
+            (NOW() - first_date)
+        ) / 86400.0
+      ) AS days
+    FROM
+      Aggr
+    WHERE
+      first_date IS NOT NULL
+  )
 SELECT
-    counter_id,
-    SUM(value) AS total,
-    MIN(recorded_at) AS firstDate,
-    MAX(recorded_at) AS lastDate
+  ct.total,
+  ct.days,
+  (ct.total / NULLIF(ct.days, 1))::float AS avg
 FROM
-    data
-WHERE
-    counter_id = $1
-    AND recorded_at >= $2
-GROUP BY
-    counter_id
+  TimeCalc ct
 `
 
-type GetCounterStatsParams struct {
-	CounterID  uuid.UUID          `json:"counter_id"`
-	RecordedAt pgtype.Timestamptz `json:"recorded_at"`
-}
-
 type GetCounterStatsRow struct {
-	CounterID uuid.UUID   `json:"counter_id"`
-	Total     int64       `json:"total"`
-	Firstdate interface{} `json:"firstdate"`
-	Lastdate  interface{} `json:"lastdate"`
+	Total int64   `json:"total"`
+	Days  float64 `json:"days"`
+	Avg   float64 `json:"avg"`
 }
 
-func (q *Queries) GetCounterStats(ctx context.Context, arg GetCounterStatsParams) (GetCounterStatsRow, error) {
-	row := q.db.QueryRow(ctx, getCounterStats, arg.CounterID, arg.RecordedAt)
+func (q *Queries) GetCounterStats(ctx context.Context, counterID uuid.UUID) (GetCounterStatsRow, error) {
+	row := q.db.QueryRow(ctx, getCounterStats, counterID)
 	var i GetCounterStatsRow
-	err := row.Scan(
-		&i.CounterID,
-		&i.Total,
-		&i.Firstdate,
-		&i.Lastdate,
-	)
+	err := row.Scan(&i.Total, &i.Days, &i.Avg)
+	return i, err
+}
+
+const getCounterStatsGlobal = `-- name: GetCounterStatsGlobal :one
+WITH
+  Aggr AS (
+    SELECT
+      SUM(VALUE)       AS total,
+      MIN(recorded_at) AS first_date
+    FROM
+      data
+    WHERE
+      counter_id = $1
+  ),
+  TimeCalc AS (
+    SELECT
+      total,
+      first_date,
+      CEIL(
+        EXTRACT(
+          epoch
+          FROM
+            (NOW() - first_date)
+        ) / 86400.0
+      ) AS days
+    FROM
+      Aggr
+    WHERE
+      first_date IS NOT NULL
+  )
+SELECT
+  ct.total,
+  ct.days,
+  (ct.total / NULLIF(ct.days, 1))::float AS avg
+FROM
+  TimeCalc ct
+`
+
+type GetCounterStatsGlobalRow struct {
+	Total int64   `json:"total"`
+	Days  float64 `json:"days"`
+	Avg   float64 `json:"avg"`
+}
+
+func (q *Queries) GetCounterStatsGlobal(ctx context.Context, counterID uuid.UUID) (GetCounterStatsGlobalRow, error) {
+	row := q.db.QueryRow(ctx, getCounterStatsGlobal, counterID)
+	var i GetCounterStatsGlobalRow
+	err := row.Scan(&i.Total, &i.Days, &i.Avg)
 	return i, err
 }
 
 const listCounters = `-- name: ListCounters :many
-SELECT id, user_id, name, soft_reset, created_at, updated_at FROM counters
-ORDER BY id
+SELECT
+  id, user_id, name, soft_reset, created_at, updated_at
+FROM
+  counters
+ORDER BY
+  id
 `
 
 func (q *Queries) ListCounters(ctx context.Context) ([]Counter, error) {
@@ -141,9 +211,14 @@ func (q *Queries) ListCounters(ctx context.Context) ([]Counter, error) {
 }
 
 const listCountersByUser = `-- name: ListCountersByUser :many
-SELECT id, user_id, name, soft_reset, created_at, updated_at FROM counters
-WHERE user_id = $1
-ORDER BY id
+SELECT
+  id, user_id, name, soft_reset, created_at, updated_at
+FROM
+  counters
+WHERE
+  user_id = $1
+ORDER BY
+  id
 `
 
 func (q *Queries) ListCountersByUser(ctx context.Context, userID *uuid.UUID) ([]Counter, error) {
@@ -174,7 +249,14 @@ func (q *Queries) ListCountersByUser(ctx context.Context, userID *uuid.UUID) ([]
 }
 
 const updateCounter = `-- name: UpdateCounter :one
-UPDATE counters SET name = $2, user_id = $3 WHERE id = $1 RETURNING id, user_id, name, soft_reset, created_at, updated_at
+UPDATE counters
+SET
+  name = $2,
+  user_id = $3
+WHERE
+  id = $1
+RETURNING
+  id, user_id, name, soft_reset, created_at, updated_at
 `
 
 type UpdateCounterParams struct {
