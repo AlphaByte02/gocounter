@@ -10,7 +10,7 @@ import {
     TimelineOppositeContent,
     TimelineSeparator,
 } from "@mui/lab";
-import { Container, Fab, Unstable_Grid2 as Grid } from "@mui/material";
+import { Container, Fab, Grid } from "@mui/material";
 import axios from "axios";
 import { useEffect, useState } from "react";
 
@@ -124,7 +124,7 @@ function Feed() {
                     style={{ minHeight: "100vh", padding: "1rem auto" }}
                     gap={4}
                 >
-                    <Grid xs={12}>
+                    <Grid size={12}>
                         <Timeline position="alternate">{getTimelineItem(datas)}</Timeline>
                     </Grid>
                 </Grid>

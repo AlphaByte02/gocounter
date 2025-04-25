@@ -8,13 +8,24 @@ import (
 )
 
 func GetData(c fiber.Ctx) error {
-	return nil
+	Q := c.Context().Value("db").(*db.Queries)
+
+	dataID, _ := fiber.Convert(c.Params("id"), uuid.Parse)
+	data, err := Q.GetData(c.Context(), dataID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   err.Error(),
+		})
+	}
+
+	return c.JSON(data)
 }
 
 func ListData(c fiber.Ctx) error {
 	Q := c.Context().Value("db").(*db.Queries)
 
-	data, err := Q.ListData(c.Context())
+	data, err := Q.ListDataFeed(c.Context(), db.ListDataFeedParams{Limit: 200, Offset: 0})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,

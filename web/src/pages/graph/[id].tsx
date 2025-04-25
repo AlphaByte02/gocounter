@@ -1,7 +1,7 @@
 import type { IData } from "@lib/models";
 import type { ChartData, ChartOptions } from "chart.js";
 
-import { CircularProgress, Container, Unstable_Grid2 as Grid, Typography } from "@mui/material";
+import { CircularProgress, Container, Grid, Typography } from "@mui/material";
 import axios from "axios";
 import { Chart as ChartJs, Colors } from "chart.js";
 import "chart.js/auto";
@@ -358,7 +358,7 @@ export default function Graph() {
         axios
             .get(`/api/counters/${id}/data`, { params: { global: useGlobal } })
             .then(({ data }) => {
-                setDataset(data);
+                setDataset(data || []);
                 setIsLoading(false);
             })
             .catch(() => {});
@@ -367,19 +367,19 @@ export default function Graph() {
     return (
         <Container maxWidth="lg">
             <Grid container style={{ marginBottom: "1.5rem" }}>
-                <Grid xs={3}>
+                <Grid size={3}>
                     <Typography variant="h1" sx={{ textAlign: "center", transform: "rotateZ(180deg)" }}>
                         <Link to="/" className="no-link" style={{ color: "#FFFFFFD9" }}>
                             &#10140;
                         </Link>
                     </Typography>
                 </Grid>
-                <Grid xs={6}>
+                <Grid size={6}>
                     <Typography variant="h1" sx={{ textAlign: "center" }}>
                         Graph
                     </Typography>
                 </Grid>
-                <Grid xs={3} sx={{ alignSelf: "center" }}>
+                <Grid size={3} sx={{ alignSelf: "center" }}>
                     <ButtonGroupRadio
                         disabled={isLoading || dataset?.length === 0}
                         buttons={[
@@ -395,7 +395,7 @@ export default function Graph() {
             </Grid>
 
             <Grid container alignContent="center" justifyContent="center" style={{ minHeight: "70vh" }}>
-                <Grid xs={12}>
+                <Grid size={12}>
                     <IF condition={!isLoading && dataset.length === 0}>
                         <div style={{ textAlign: "center" }}>
                             <Typography

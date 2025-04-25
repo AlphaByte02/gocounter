@@ -196,3 +196,49 @@ func (q *Queries) ListDataByCounterGlobal(ctx context.Context, counterID uuid.UU
 	}
 	return items, nil
 }
+
+const listDataFeed = `-- name: ListDataFeed :many
+SELECT
+    id, counter_id, value, recorded_at, created_at, updated_at
+FROM
+    DATA
+ORDER BY
+    recorded_at DESC,
+    id DESC
+LIMIT
+    $1
+OFFSET
+    $2
+`
+
+type ListDataFeedParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) ListDataFeed(ctx context.Context, arg ListDataFeedParams) ([]Datum, error) {
+	rows, err := q.db.Query(ctx, listDataFeed, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Datum
+	for rows.Next() {
+		var i Datum
+		if err := rows.Scan(
+			&i.ID,
+			&i.CounterID,
+			&i.Value,
+			&i.RecordedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

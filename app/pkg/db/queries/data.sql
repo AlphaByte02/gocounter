@@ -16,6 +16,19 @@ FROM
 ORDER BY
     id;
 
+-- name: ListDataFeed :many
+SELECT
+    *
+FROM
+    DATA
+ORDER BY
+    recorded_at DESC,
+    id DESC
+LIMIT
+    $1
+OFFSET
+    $2;
+
 -- name: DeleteData :exec
 DELETE FROM DATA
 WHERE

@@ -11,7 +11,7 @@ import {
     Fab,
     FormControlLabel,
     FormGroup,
-    Unstable_Grid2 as Grid,
+    Grid,
     TextField,
     Typography,
 } from "@mui/material";
@@ -185,7 +185,7 @@ function App() {
     useEffect(() => {
         axios
             .get("/api/counters")
-            .then(({ data }: { data: ICounter[] }) => setCounters(data))
+            .then(({ data }: { data: ICounter[] }) => setCounters(data || []))
             .catch(() => {});
     }, []);
 
@@ -310,7 +310,7 @@ function App() {
                     gap={4}
                 >
                     {counters.map((counter) => (
-                        <Grid xs={10} md={5} key={counter.id}>
+                        <Grid size={{ xs: 10, md: 5 }} key={counter.id}>
                             <Counter
                                 id={counter.id}
                                 avgDisplay={avgDisplay}
