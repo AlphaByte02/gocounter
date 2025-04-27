@@ -135,13 +135,11 @@ const Counter = ({ id, name, avgDisplay = "numeric", global = false, onEdit }: C
     function submit(value: number, date: Date | undefined = undefined) {
         setIsSubmitting(true);
 
-        const values: { number: number; counterRef: string; createdAt?: Date } = {
-            number: value,
-            counterRef: id,
+        const values: { value: number; counter_id: string; recorded_at?: Date } = {
+            value: value,
+            counter_id: id,
+            recorded_at: date || dayjs().toDate(),
         };
-        if (date) {
-            values.createdAt = date;
-        }
 
         axios
             .post("/api/data", values)

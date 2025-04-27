@@ -18,6 +18,7 @@ func SetRoutes(a *fiber.App) {
 	route.Delete("/counters/:id", h.DeleteCounter)
 
 	route.Get("/data", h.ListData)
+	route.Get("/feed", h.ListDataFeed)
 	route.Get("/data/:id", h.GetData)
 	route.Post("/data", h.CreateData)
 	route.Patch("/data/:id", h.UpdateData)

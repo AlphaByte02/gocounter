@@ -25,6 +25,20 @@ func GetData(c fiber.Ctx) error {
 func ListData(c fiber.Ctx) error {
 	Q := c.Context().Value("db").(*db.Queries)
 
+	data, err := Q.ListData(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   err.Error(),
+		})
+	}
+
+	return c.JSON(data)
+}
+
+func ListDataFeed(c fiber.Ctx) error {
+	Q := c.Context().Value("db").(*db.Queries)
+
 	data, err := Q.ListDataFeed(c.Context(), db.ListDataFeedParams{Limit: 200, Offset: 0})
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

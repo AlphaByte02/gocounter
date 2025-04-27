@@ -1,3 +1,7 @@
+CREATE TYPE counter_visibility AS ENUM('global', 'group', 'private');
+
+CREATE TYPE counter_edit_policy AS ENUM('everyone', 'owner_only');
+
 CREATE TABLE
     groups (
         id UUID PRIMARY KEY,
@@ -33,6 +37,8 @@ CREATE TABLE
         user_id UUID REFERENCES users (id) ON DELETE CASCADE,
         name TEXT NOT NULL UNIQUE,
         soft_reset TIMESTAMPTZ DEFAULT NULL,
+        visibility counter_visibility NOT NULL DEFAULT 'private',
+        edit_policy counter_edit_policy NOT NULL DEFAULT 'owner_only',
         created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
         updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
     );
@@ -46,7 +52,7 @@ CREATE TABLE
         id UUID PRIMARY KEY,
         counter_id UUID NOT NULL REFERENCES counters (id) ON DELETE CASCADE,
         value INTEGER NOT NULL,
-        recorded_at TIMESTAMPTZ NOT NULL,
+        recorded_at TIMESTAMPTZ DEFAULT now() NOT NULL,
         created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
         updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
     );

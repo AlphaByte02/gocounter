@@ -5,17 +5,107 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type CounterEditPolicy string
+
+const (
+	CounterEditPolicyEveryone  CounterEditPolicy = "everyone"
+	CounterEditPolicyOwnerOnly CounterEditPolicy = "owner_only"
+)
+
+func (e *CounterEditPolicy) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CounterEditPolicy(s)
+	case string:
+		*e = CounterEditPolicy(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CounterEditPolicy: %T", src)
+	}
+	return nil
+}
+
+type NullCounterEditPolicy struct {
+	CounterEditPolicy CounterEditPolicy `json:"counter_edit_policy"`
+	Valid             bool              `json:"valid"` // Valid is true if CounterEditPolicy is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCounterEditPolicy) Scan(value interface{}) error {
+	if value == nil {
+		ns.CounterEditPolicy, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CounterEditPolicy.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCounterEditPolicy) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CounterEditPolicy), nil
+}
+
+type CounterVisibility string
+
+const (
+	CounterVisibilityGlobal  CounterVisibility = "global"
+	CounterVisibilityGroup   CounterVisibility = "group"
+	CounterVisibilityPrivate CounterVisibility = "private"
+)
+
+func (e *CounterVisibility) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CounterVisibility(s)
+	case string:
+		*e = CounterVisibility(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CounterVisibility: %T", src)
+	}
+	return nil
+}
+
+type NullCounterVisibility struct {
+	CounterVisibility CounterVisibility `json:"counter_visibility"`
+	Valid             bool              `json:"valid"` // Valid is true if CounterVisibility is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCounterVisibility) Scan(value interface{}) error {
+	if value == nil {
+		ns.CounterVisibility, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CounterVisibility.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCounterVisibility) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.CounterVisibility), nil
+}
+
 type Counter struct {
-	ID        uuid.UUID          `json:"id"`
-	UserID    *uuid.UUID         `json:"user_id"`
-	Name      string             `json:"name"`
-	SoftReset pgtype.Timestamptz `json:"soft_reset"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	ID         uuid.UUID          `json:"id"`
+	UserID     *uuid.UUID         `json:"user_id"`
+	Name       string             `json:"name"`
+	SoftReset  pgtype.Timestamptz `json:"soft_reset"`
+	Visibility CounterVisibility  `json:"visibility"`
+	EditPolicy CounterEditPolicy  `json:"edit_policy"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Datum struct {

@@ -2,6 +2,8 @@ export interface ICounter {
     id: string;
     name: string;
     soft_reset: string;
+    visibility: string;
+    edit_policy: string;
     created_at: string;
     updated_at: string;
 }

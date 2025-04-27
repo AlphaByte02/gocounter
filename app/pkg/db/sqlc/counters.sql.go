@@ -17,7 +17,7 @@ INSERT INTO
 VALUES
   ($1, $2, $3)
 RETURNING
-  id, user_id, name, soft_reset, created_at, updated_at
+  id, user_id, name, soft_reset, visibility, edit_policy, created_at, updated_at
 `
 
 type CreateCounterParams struct {
@@ -34,6 +34,8 @@ func (q *Queries) CreateCounter(ctx context.Context, arg CreateCounterParams) (C
 		&i.UserID,
 		&i.Name,
 		&i.SoftReset,
+		&i.Visibility,
+		&i.EditPolicy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -53,7 +55,7 @@ func (q *Queries) DeleteCounter(ctx context.Context, id uuid.UUID) error {
 
 const getCounter = `-- name: GetCounter :one
 SELECT
-  id, user_id, name, soft_reset, created_at, updated_at
+  id, user_id, name, soft_reset, visibility, edit_policy, created_at, updated_at
 FROM
   counters
 WHERE
@@ -70,6 +72,8 @@ func (q *Queries) GetCounter(ctx context.Context, id uuid.UUID) (Counter, error)
 		&i.UserID,
 		&i.Name,
 		&i.SoftReset,
+		&i.Visibility,
+		&i.EditPolicy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -176,7 +180,7 @@ func (q *Queries) GetCounterStatsGlobal(ctx context.Context, counterID uuid.UUID
 
 const listCounters = `-- name: ListCounters :many
 SELECT
-  id, user_id, name, soft_reset, created_at, updated_at
+  id, user_id, name, soft_reset, visibility, edit_policy, created_at, updated_at
 FROM
   counters
 ORDER BY
@@ -197,6 +201,8 @@ func (q *Queries) ListCounters(ctx context.Context) ([]Counter, error) {
 			&i.UserID,
 			&i.Name,
 			&i.SoftReset,
+			&i.Visibility,
+			&i.EditPolicy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -212,7 +218,7 @@ func (q *Queries) ListCounters(ctx context.Context) ([]Counter, error) {
 
 const listCountersByUser = `-- name: ListCountersByUser :many
 SELECT
-  id, user_id, name, soft_reset, created_at, updated_at
+  id, user_id, name, soft_reset, visibility, edit_policy, created_at, updated_at
 FROM
   counters
 WHERE
@@ -235,6 +241,8 @@ func (q *Queries) ListCountersByUser(ctx context.Context, userID *uuid.UUID) ([]
 			&i.UserID,
 			&i.Name,
 			&i.SoftReset,
+			&i.Visibility,
+			&i.EditPolicy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -256,7 +264,7 @@ SET
 WHERE
   id = $1
 RETURNING
-  id, user_id, name, soft_reset, created_at, updated_at
+  id, user_id, name, soft_reset, visibility, edit_policy, created_at, updated_at
 `
 
 type UpdateCounterParams struct {
@@ -273,6 +281,8 @@ func (q *Queries) UpdateCounter(ctx context.Context, arg UpdateCounterParams) (C
 		&i.UserID,
 		&i.Name,
 		&i.SoftReset,
+		&i.Visibility,
+		&i.EditPolicy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
