@@ -61,7 +61,8 @@ func main() {
 	api.SetRoutes(app)
 
 	if Configs.String("general.env") == "production" {
-		app.Get("/*", static.New("./web/dist"))
+		app.Get("/*", static.New("./web/dist/", static.Config{Compress: true}))
+		app.Get("/*", static.New("./web/dist/index.html", static.Config{Compress: true}))
 	} else {
 		app.Get("/", func(c fiber.Ctx) error {
 			return c.SendString("Hello, World!")
