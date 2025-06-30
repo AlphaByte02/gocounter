@@ -242,3 +242,51 @@ func (q *Queries) ListDataFeed(ctx context.Context, arg ListDataFeedParams) ([]D
 	}
 	return items, nil
 }
+
+const listDataNoGlobal = `-- name: ListDataNoGlobal :many
+WITH
+    min_reset AS (
+        SELECT
+            MIN(soft_reset) AS value
+        FROM
+            counters
+        WHERE
+            soft_reset IS NOT NULL
+    )
+SELECT
+    data.id, data.counter_id, data.value, data.recorded_at, data.created_at, data.updated_at
+FROM
+    data,
+    min_reset
+WHERE
+    recorded_at > COALESCE(min_reset.value, to_timestamp(0))
+ORDER BY
+    id
+`
+
+func (q *Queries) ListDataNoGlobal(ctx context.Context) ([]Datum, error) {
+	rows, err := q.db.Query(ctx, listDataNoGlobal)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Datum
+	for rows.Next() {
+		var i Datum
+		if err := rows.Scan(
+			&i.ID,
+			&i.CounterID,
+			&i.Value,
+			&i.RecordedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

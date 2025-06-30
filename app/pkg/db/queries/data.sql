@@ -16,6 +16,26 @@ FROM
 ORDER BY
     id;
 
+-- name: ListDataNoGlobal :many
+WITH
+    min_reset AS (
+        SELECT
+            MIN(soft_reset) AS value
+        FROM
+            counters
+        WHERE
+            soft_reset IS NOT NULL
+    )
+SELECT
+    data.*
+FROM
+    data,
+    min_reset
+WHERE
+    recorded_at > COALESCE(min_reset.value, to_timestamp(0))
+ORDER BY
+    id;
+
 -- name: ListDataFeed :many
 SELECT
     *

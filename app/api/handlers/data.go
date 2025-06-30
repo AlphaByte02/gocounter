@@ -25,7 +25,19 @@ func GetData(c fiber.Ctx) error {
 func ListData(c fiber.Ctx) error {
 	Q := c.Context().Value("db").(*db.Queries)
 
-	data, err := Q.ListData(c.Context())
+	if fiber.Query(c, "global", false) {
+		data, err := Q.ListData(c.Context())
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": true,
+				"msg":   err.Error(),
+			})
+		}
+
+		return c.JSON(data)
+	}
+
+	data, err := Q.ListDataNoGlobal(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,

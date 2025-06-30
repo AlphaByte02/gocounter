@@ -10,11 +10,12 @@ import {
     TimelineOppositeContent,
     TimelineSeparator,
 } from "@mui/lab";
-import { Container, Fab, Grid } from "@mui/material";
+import { CircularProgress, Container, Fab, Grid, Typography } from "@mui/material";
 import axios from "axios";
 import { useEffect, useState } from "react";
 
 import { useNavigate } from "@/router";
+import IF from "@/components/IF";
 
 type IDatas = Record<string, Array<IData>>;
 type ICounters = Record<string, string>;
@@ -25,6 +26,8 @@ function Feed() {
     const [datas, setDatas] = useState<IDatas>({});
     const [counters, setCounters] = useState<ICounters>({});
 
+    const [isLoading, setIsLoading] = useState(true);
+
     useEffect(() => {
         async function setup() {
             await axios
@@ -34,7 +37,7 @@ function Feed() {
                 )
                 .catch(() => {});
 
-            axios
+            await axios
                 .get("/api/feed")
                 .then(({ data: rd }: { data: IData[] }) => {
                     const newdatas: IDatas = {};
@@ -54,7 +57,9 @@ function Feed() {
                 .catch(() => {});
         }
 
-        setup().catch(() => {});
+        setup()
+            .then(() => setIsLoading(false))
+            .catch(() => {});
     }, []);
 
     function getTimelineItem(items: IDatas) {
@@ -92,7 +97,7 @@ function Feed() {
 
                 timelineitems.push(
                     <TimelineItem key={key}>
-                        <TimelineOppositeContent color="text.secondary">{key}</TimelineOppositeContent>
+                        <TimelineOppositeContent>{key}</TimelineOppositeContent>
                         <TimelineSeparator>
                             <TimelineDot />
                             {counter != itemsLen - 1 && <TimelineConnector />}
@@ -117,6 +122,13 @@ function Feed() {
     return (
         <>
             <Container maxWidth="lg">
+                <Grid container style={{ marginBottom: "1.5rem" }}>
+                    <Grid size={12}>
+                        <Typography variant="h1" sx={{ textAlign: "center" }}>
+                            Feed
+                        </Typography>
+                    </Grid>
+                </Grid>
                 <Grid
                     container
                     alignContent="center"
@@ -125,12 +137,31 @@ function Feed() {
                     gap={4}
                 >
                     <Grid size={12}>
-                        <Timeline position="alternate">{getTimelineItem(datas)}</Timeline>
+                        <IF condition={isLoading}>
+                            <div style={{ textAlign: "center" }}>
+                                <CircularProgress sx={{ marginRight: "2rem" }} />
+                                <Typography
+                                    variant="h3"
+                                    sx={{ textAlign: "center", display: "inline-block", verticalAlign: "super" }}
+                                >
+                                    Loading...
+                                </Typography>
+                            </div>
+                        </IF>
+                        <IF condition={!isLoading}>
+                            <Timeline position="alternate">{getTimelineItem(datas)}</Timeline>
+                        </IF>
                     </Grid>
                 </Grid>
             </Container>
             <Fab
-                style={{ position: "fixed", right: "3%", bottom: "40px", transform: "rotateZ(180deg)" }}
+                style={{ position: "fixed", right: "3%", bottom: "105px", fontSize: "20px" }}
+                onClick={() => navigate("/graph/all")}
+            >
+                📈
+            </Fab>
+            <Fab
+                sx={{ position: "fixed", right: "3%", bottom: "40px", transform: "rotateZ(180deg)" }}
                 color="secondary"
                 onClick={() => navigate("/")}
             >
