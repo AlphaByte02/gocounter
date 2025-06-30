@@ -80,15 +80,15 @@ const CounterDrawer = ({ open, counter: initCounter, onClose, onSubmit, onDelete
                         Soft Reset
                     </Typography>
                     <Stack direction="row" width="100%" justifyContent="center" alignItems="center" spacing={2}>
-                        {counter?.softReset && (
+                        {counter?.soft_reset && (
                             <Typography component="span" align="center">
-                                {new Date(counter.softReset).toLocaleString("it")}
+                                {new Date(counter.soft_reset).toLocaleString("it")}
                             </Typography>
                         )}
                         <Button variant="outlined" color="warning" onClick={() => resetSoftReset()}>
-                            {counter?.softReset ? "↺" : "+"}
+                            {counter?.soft_reset ? "↺" : "+"}
                         </Button>
-                        {counter?.softReset && (
+                        {counter?.soft_reset && (
                             <Button variant="outlined" color="secondary" onClick={() => removeSoftReset()}>
                                 🗑️
                             </Button>

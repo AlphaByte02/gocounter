@@ -1,27 +1,33 @@
 package api
 
 import (
-	v1 "main/app/api/v1"
+	h "main/app/api/handlers"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 func SetRoutes(a *fiber.App) {
-	route := a.Group("/api/v1")
+	route := a.Group("/api")
 
-	route.Get("/counters", v1.GetCounters)
-	route.Post("/counters", v1.CreateCounter)
-	route.Get("/counters/:id", v1.GetCounter)
-	route.Patch("/counters/:id", v1.EditCounter)
-	route.Delete("/counters/:id", v1.DeleteCounter)
-	route.Get("/counters/:id/data", v1.GetCounterData)
-	route.Get("/counters/:id/dataByMonth", v1.GetCounterDataByMonth)
-	route.Get("/counters/:id/sum", v1.GetCounterSum)
-	route.Get("/counters/:id/avg", v1.GetCounterAvg)
-	route.Get("/counters/:id/stats", v1.GetCounterStats)
+	route.Get("/counters", h.ListCounter)
+	route.Get("/counters/:id", h.GetCounter)
+	route.Get("/counters/:id/data", h.GetCounterData)
+	route.Get("/counters/:id/stats", h.GetCounterStats)
+	route.Post("/counters", h.CreateCounter)
+	route.Patch("/counters/:id", h.UpdateCounter)
+	route.Delete("/counters/:id", h.DeleteCounter)
 
-	route.Post("/datas", v1.CreateData)
-	route.Get("/datas", v1.GetDatas)
-	route.Get("/datas/:id", v1.GetData)
-	route.Delete("/datas/:id", v1.DeleteData)
+	route.Get("/data", h.ListData)
+	route.Get("/feed", h.ListDataFeed)
+	route.Get("/data/:id", h.GetData)
+	route.Post("/data", h.CreateData)
+	route.Patch("/data/:id", h.UpdateData)
+	route.Delete("/data/:id", h.DeleteData)
+
+	route.Get("/users", h.ListUser)
+	route.Get("/users/:id", h.GetUser)
+	route.Post("/users", h.CreateUser)
+	route.Patch("/users/:id", h.UpdateUser)
+	route.Delete("/users/:id", h.DeleteUser)
+
 }

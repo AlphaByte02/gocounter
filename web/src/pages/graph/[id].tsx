@@ -1,7 +1,7 @@
-import type { ChartData, ChartOptions } from "chart.js";
 import type { IData } from "@lib/models";
+import type { ChartData, ChartOptions } from "chart.js";
 
-import { CircularProgress, Container, Unstable_Grid2 as Grid, Typography } from "@mui/material";
+import { CircularProgress, Container, Grid, Typography } from "@mui/material";
 import axios from "axios";
 import { Chart as ChartJs, Colors } from "chart.js";
 import "chart.js/auto";
@@ -53,8 +53,8 @@ function YearlyGraph({ data }: { data: IData[] }) {
         let firstDate: Date;
 
         // Aggrega i dati per anno e trova la prima data
-        data.forEach(({ createdAt, number }) => {
-            const date = new Date(createdAt);
+        data.forEach(({ recorded_at, value }) => {
+            const date = new Date(recorded_at);
             const year = date.getFullYear();
 
             if (!firstDate || date < firstDate) {
@@ -64,7 +64,7 @@ function YearlyGraph({ data }: { data: IData[] }) {
             if (!yearlyDataMap.has(year)) {
                 yearlyDataMap.set(year, { total: 0 });
             }
-            yearlyDataMap.get(year).total += number;
+            yearlyDataMap.get(year).total += value;
         });
 
         const labels: string[] = [];
@@ -149,19 +149,19 @@ function MonthGraph({ data }: { data: IData[] }) {
         const monthlyDataMap = new Map<string, { total: number; firstDay: number; year: number; month: number }>();
 
         // Aggrega i dati per mese e anno
-        data.forEach(({ createdAt, number }) => {
-            const date = new Date(createdAt);
+        data.forEach(({ recorded_at, value }) => {
+            const date = new Date(recorded_at);
             const key = `${date.getFullYear()}-${date.getMonth()}`;
             const dmap = monthlyDataMap.get(key);
             if (!dmap) {
                 monthlyDataMap.set(key, {
-                    total: number,
+                    total: value,
                     firstDay: date.getDate(),
                     year: date.getFullYear(),
                     month: date.getMonth(),
                 });
             } else {
-                dmap.total += number;
+                dmap.total += value;
             }
         });
 
@@ -237,8 +237,8 @@ function WeekGraph({ data }: { data: IData[] }) {
     const dataset = useMemo<ChartData<"bar">>(() => {
         const ds = new Array(WEEK.length).fill(0);
         for (const singleData of data) {
-            const weekday = new Date(singleData.createdAt).getDay();
-            ds[weekday] = (ds[weekday] || 0) + singleData.number;
+            const weekday = new Date(singleData.recorded_at).getDay();
+            ds[weekday] = (ds[weekday] || 0) + singleData.value;
         }
         ds[ds.length] = ds[0];
         ds.shift();
@@ -265,11 +265,11 @@ function DayGraph({ data }: { data: IData[] }) {
         const ds = [];
 
         for (const singleData of data) {
-            const dateString = getDateLabel(new Date(singleData.createdAt));
-            temp[dateString] = (temp?.[dateString] || 0) + singleData.number;
+            const dateString = getDateLabel(new Date(singleData.recorded_at));
+            temp[dateString] = (temp?.[dateString] || 0) + singleData.value;
         }
 
-        const range = dateRange(data[0].createdAt, new Date());
+        const range = dateRange(data[0].recorded_at, new Date());
         for (const day of range) {
             const label = getDateLabel(day);
             labels.push(label);
@@ -319,11 +319,11 @@ function HourGraph({ data }: { data: IData[] }) {
         const ds = new Array(24).fill(0);
 
         for (const d of data) {
-            const date = new Date(d.createdAt);
+            const date = new Date(d.recorded_at);
             const pos = date.getHours();
 
             labels[pos] = getDateLabel(date);
-            ds[pos] += d.number;
+            ds[pos] += d.value;
         }
 
         return {
@@ -356,9 +356,9 @@ export default function Graph() {
 
     useEffect(() => {
         axios
-            .get(`/api/v1/counters/${id}/data`, { params: { global: useGlobal } })
+            .get(`/api/counters/${id}/data`, { params: { global: useGlobal } })
             .then(({ data }) => {
-                setDataset(data);
+                setDataset(data || []);
                 setIsLoading(false);
             })
             .catch(() => {});
@@ -367,19 +367,19 @@ export default function Graph() {
     return (
         <Container maxWidth="lg">
             <Grid container style={{ marginBottom: "1.5rem" }}>
-                <Grid xs={3}>
+                <Grid size={3}>
                     <Typography variant="h1" sx={{ textAlign: "center", transform: "rotateZ(180deg)" }}>
                         <Link to="/" className="no-link" style={{ color: "#FFFFFFD9" }}>
                             &#10140;
                         </Link>
                     </Typography>
                 </Grid>
-                <Grid xs={6}>
+                <Grid size={6}>
                     <Typography variant="h1" sx={{ textAlign: "center" }}>
                         Graph
                     </Typography>
                 </Grid>
-                <Grid xs={3} sx={{ alignSelf: "center" }}>
+                <Grid size={3} sx={{ alignSelf: "center" }}>
                     <ButtonGroupRadio
                         disabled={isLoading || dataset?.length === 0}
                         buttons={[
@@ -395,7 +395,7 @@ export default function Graph() {
             </Grid>
 
             <Grid container alignContent="center" justifyContent="center" style={{ minHeight: "70vh" }}>
-                <Grid xs={12}>
+                <Grid size={12}>
                     <IF condition={!isLoading && dataset.length === 0}>
                         <div style={{ textAlign: "center" }}>
                             <Typography

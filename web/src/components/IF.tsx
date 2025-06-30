@@ -7,5 +7,4 @@ const IF = memo(
     (props, oldProps) => props.condition === oldProps.condition
 );
 
-// eslint-disable-next-line react-refresh/only-export-components
 export default IF;

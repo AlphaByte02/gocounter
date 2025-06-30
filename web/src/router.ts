@@ -3,7 +3,7 @@
 
 import { components, hooks, utils } from "@generouted/react-router/client";
 
-export type Path = `/` | `/feed` | `/graph/:id`;
+export type Path = `/` | `/feed` | `/graph/:id` | `/graph/all`;
 
 export type Params = {
     "/graph/:id": { id: string };

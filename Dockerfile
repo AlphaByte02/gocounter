@@ -9,7 +9,7 @@ RUN /root/.local/share/pnpm/pnpm run build
 
 
 # Stage  2: Build the Go application
-FROM golang:1.22-alpine AS build-go
+FROM golang:1.24-alpine AS build-go
 WORKDIR /app
 COPY ./app ./app
 COPY ./go.* ./

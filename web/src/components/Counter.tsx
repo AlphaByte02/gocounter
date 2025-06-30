@@ -7,7 +7,7 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
-    Unstable_Grid2 as Grid,
+    Grid,
     Menu,
     MenuItem,
     Paper,
@@ -116,7 +116,7 @@ const Counter = ({ id, name, avgDisplay = "numeric", global = false, onEdit }: C
 
     const setStats = useCallback(() => {
         axios
-            .get(`/api/v1/counters/${id}/stats`, { params: { global: global } })
+            .get(`/api/counters/${id}/stats`, { params: { global: global } })
             .then(({ data }) => {
                 setCount(data.total);
                 setAvg(data.avg);
@@ -135,16 +135,14 @@ const Counter = ({ id, name, avgDisplay = "numeric", global = false, onEdit }: C
     function submit(value: number, date: Date | undefined = undefined) {
         setIsSubmitting(true);
 
-        const values: { number: number; counterRef: string; createdAt?: Date } = {
-            number: value,
-            counterRef: id,
+        const values: { value: number; counter_id: string; recorded_at?: Date } = {
+            value: value,
+            counter_id: id,
+            recorded_at: date || dayjs().toDate(),
         };
-        if (date) {
-            values.createdAt = date;
-        }
 
         axios
-            .post("/api/v1/datas", values)
+            .post("/api/data", values)
             .then(() => setStats())
             .catch(() => {})
             .finally(() => {
@@ -178,21 +176,21 @@ const Counter = ({ id, name, avgDisplay = "numeric", global = false, onEdit }: C
     return (
         <Paper elevation={3} style={{ padding: "0.5em 1em" }}>
             <Grid container>
-                <Grid xs={12} container>
-                    <Grid xs={8} xsOffset={2}>
+                <Grid size={12} container>
+                    <Grid size={8} offset={2}>
                         <Typography variant="h4" align="center">
                             {name}
                         </Typography>
                     </Grid>
-                    <Grid xs={2} style={{ textAlign: "right" }}>
+                    <Grid size={2} style={{ textAlign: "right" }}>
                         <Button sx={{ color: "#FFFFFFD9" }} color="secondary" onClick={() => onEdit(id)}>
                             ⋮
                         </Button>
                     </Grid>
                 </Grid>
 
-                <Grid xs={12} container sx={{ marginBottom: ".5rem" }}>
-                    <Grid xs={3} display="flex" justifyContent="center" alignItems="center">
+                <Grid size={12} container sx={{ marginBottom: ".5rem" }}>
+                    <Grid size={3} display="flex" justifyContent="center" alignItems="center">
                         <Button
                             disabled={isSubmitting}
                             onClick={onSub}
@@ -204,7 +202,7 @@ const Counter = ({ id, name, avgDisplay = "numeric", global = false, onEdit }: C
                             -1
                         </Button>
                     </Grid>
-                    <Grid xs={6}>
+                    <Grid size={6}>
                         {!isLoading && (
                             <Typography variant="h2" align="center">
                                 {count}
@@ -222,7 +220,7 @@ const Counter = ({ id, name, avgDisplay = "numeric", global = false, onEdit }: C
                             </Box>
                         </IF>
                     </Grid>
-                    <Grid xs={3} display="flex" justifyContent="center" alignItems="center">
+                    <Grid size={3} display="flex" justifyContent="center" alignItems="center">
                         <Button
                             disabled={isSubmitting}
                             onClick={onAdd}
@@ -236,7 +234,7 @@ const Counter = ({ id, name, avgDisplay = "numeric", global = false, onEdit }: C
                     </Grid>
                 </Grid>
 
-                <Grid xs={12}>
+                <Grid size={12}>
                     <Typography align="center">
                         <Link to="/graph/:id" params={{ id: id.toString() }}>
                             <Button>Grafico</Button>

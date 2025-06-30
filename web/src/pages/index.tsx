@@ -11,7 +11,7 @@ import {
     Fab,
     FormControlLabel,
     FormGroup,
-    Unstable_Grid2 as Grid,
+    Grid,
     TextField,
     Typography,
 } from "@mui/material";
@@ -184,14 +184,14 @@ function App() {
 
     useEffect(() => {
         axios
-            .get("/api/v1/counters")
-            .then(({ data }: { data: ICounter[] }) => setCounters(data))
+            .get("/api/counters")
+            .then(({ data }: { data: ICounter[] }) => setCounters(data || []))
             .catch(() => {});
     }, []);
 
     function handleCreateCounter(name: string) {
         axios
-            .post("/api/v1/counters", { name: name })
+            .post("/api/counters", { name: name })
             .then(({ data }: { data: ICounter }) => setCounters((c) => [...c, data]))
             .catch(() => {});
     }
@@ -202,7 +202,7 @@ function App() {
         }
 
         axios
-            .delete(`/api/v1/counters/${id}`)
+            .delete(`/api/counters/${id}`)
             .then(() => setCounters((c) => c.filter((e) => e.id != id)))
             .catch(() => {});
     }
@@ -214,7 +214,7 @@ function App() {
 
         if (values.name !== currentCounter?.name) {
             return axios
-                .patch<ICounter>(`/api/v1/counters/${values.id}`, { name: values.name.trim() })
+                .patch<ICounter>(`/api/counters/${values.id}`, { name: values.name.trim() })
                 .then(({ data }) => {
                     setCounters((c) => {
                         const nc = [...c];
@@ -310,7 +310,7 @@ function App() {
                     gap={4}
                 >
                     {counters.map((counter) => (
-                        <Grid xs={10} md={5} key={counter.id}>
+                        <Grid size={{ xs: 10, md: 5 }} key={counter.id}>
                             <Counter
                                 id={counter.id}
                                 avgDisplay={avgDisplay}
