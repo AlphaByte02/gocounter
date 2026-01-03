@@ -53,7 +53,7 @@ ORDER BY
 WITH
   Aggr AS (
     SELECT
-      SUM(VALUE)       AS total,
+      SUM(VALUE) AS total,
       MIN(recorded_at) AS first_date
     FROM
       data
@@ -79,7 +79,7 @@ WITH
 SELECT
   ct.total,
   ct.days,
-  (ct.total / NULLIF(ct.days, 1))::float AS avg
+  (ct.total / COALESCE(ct.days, 1))::float AS avg
 FROM
   TimeCalc ct;
 
@@ -87,14 +87,16 @@ FROM
 WITH
   Aggr AS (
     SELECT
-      SUM(VALUE)       AS total,
-      MIN(recorded_at) AS first_date
+      SUM(VALUE) AS total,
+      COALESCE(counters.soft_reset, MIN(recorded_at)) AS first_date
     FROM
       data
       JOIN counters ON data.counter_id = counters.id
     WHERE
       counter_id = $1
       AND recorded_at >= counters.soft_reset
+    GROUP BY
+      counters.soft_reset
   ),
   TimeCalc AS (
     SELECT
@@ -115,6 +117,6 @@ WITH
 SELECT
   ct.total,
   ct.days,
-  (ct.total / NULLIF(ct.days, 1))::float AS avg
+  (ct.total / COALESCE(ct.days, 1))::float AS avg
 FROM
   TimeCalc ct;

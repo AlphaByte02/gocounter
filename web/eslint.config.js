@@ -9,14 +9,13 @@ import pluginPrettier from "eslint-plugin-prettier/recommended";
 
 export default [
     {
-        files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
         ignores: ["**/dist", "**/router.ts"],
+    },
+    {
+        files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
         rules: {
             indent: ["error", 4, { SwitchCase: 1 }],
         },
-    },
-    {
-        ignores: ["**/router.ts"],
     },
     {
         languageOptions: {

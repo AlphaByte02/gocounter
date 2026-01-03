@@ -8,6 +8,6 @@
     "go.formatFlags": ["-m", "120"],
     "go.inlayHints.constantValues": true,
 
-    "Prettier-SQL.SQLFlavourOverride": "postgresql",
-    "Prettier-SQL.keywordCase": "preserve"
+    "SQL-Formatter-VSCode.dialect": "postgresql",
+    "SQL-Formatter-VSCode.keywordCase": "preserve"
 }
