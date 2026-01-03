@@ -1,12 +1,15 @@
 # Stage  1: Build the React application
 FROM node:lts-alpine AS build-react
+
+RUN corepack enable
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
 WORKDIR /app
-RUN wget -qO- https://get.pnpm.io/install.sh | ENV="$HOME/.shrc" SHELL="$(which sh)" sh -
 
 COPY ./web ./
-RUN /root/.local/share/pnpm/pnpm install
-RUN /root/.local/share/pnpm/pnpm run build
-
+RUN pnpm install
+RUN pnpm run build
 
 # Stage  2: Build the Go application
 FROM golang:1.24-alpine AS build-go
@@ -18,7 +21,7 @@ COPY ./main.go ./
 RUN go build -o "main"
 
 # Stage  3: Setup the final image
-FROM alpine:latest
+FROM gcr.io/distroless/static-debian12
 WORKDIR /app
 
 # Copy the Go binary from the build-go stage

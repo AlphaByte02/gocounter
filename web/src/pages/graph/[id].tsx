@@ -249,7 +249,7 @@ function WeekGraph({ data }: { data: IData[] }) {
         };
     }, [data]);
 
-    const OPTIONS: ChartOptions<"bar"> = COMMON_GRAPH_OPTIONS;
+    const OPTIONS: ChartOptions<"bar" | "line"> = COMMON_GRAPH_OPTIONS;
 
     return <Chart type="bar" data={dataset} options={OPTIONS} />;
 }
@@ -282,7 +282,7 @@ function DayGraph({ data }: { data: IData[] }) {
         };
     }, [data]);
 
-    const OPTIONS: ChartOptions<"bar"> = {
+    const OPTIONS: ChartOptions<"bar" | "line"> = {
         ...COMMON_GRAPH_OPTIONS,
         plugins: {
             legend: { display: false },
@@ -332,7 +332,7 @@ function HourGraph({ data }: { data: IData[] }) {
         };
     }, [data]);
 
-    const OPTIONS: ChartOptions<"bar"> = COMMON_GRAPH_OPTIONS;
+    const OPTIONS: ChartOptions<"bar" | "line"> = COMMON_GRAPH_OPTIONS;
 
     return <Chart type="bar" data={dataset} options={OPTIONS} />;
 }
