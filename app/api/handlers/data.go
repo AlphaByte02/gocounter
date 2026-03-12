@@ -2,9 +2,11 @@ package handlers
 
 import (
 	db "main/app/pkg/db/sqlc"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func GetData(c fiber.Ctx) error {
@@ -25,8 +27,10 @@ func GetData(c fiber.Ctx) error {
 func ListData(c fiber.Ctx) error {
 	Q := c.Context().Value("db").(*db.Queries)
 
-	if fiber.Query(c, "global", false) {
-		data, err := Q.ListData(c.Context())
+	fromYear := fiber.Query(c, "from", 0)
+
+	if fromYear != 0 {
+		data, err := Q.ListDataSince(c.Context(), int32(fromYear))
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": true,
@@ -37,7 +41,7 @@ func ListData(c fiber.Ctx) error {
 		return c.JSON(data)
 	}
 
-	data, err := Q.ListDataNoGlobal(c.Context())
+	data, err := Q.ListData(c.Context())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -75,6 +79,12 @@ func CreateData(c fiber.Ctx) error {
 	}
 
 	body.ID, _ = uuid.NewV7()
+	if !body.RecordedAt.Valid {
+		defaultRecordedAt := pgtype.Timestamptz{}
+		defaultRecordedAt.Scan(time.Now())
+
+		body.RecordedAt = defaultRecordedAt
+	}
 	counter, err := Q.CreateData(c.Context(), body)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -93,3 +103,5 @@ func UpdateData(c fiber.Ctx) error {
 func DeleteData(c fiber.Ctx) error {
 	return nil
 }
+
+// fiber:context-methods migrated

@@ -15,9 +15,9 @@ const getUser = `-- name: GetUser :one
 SELECT
     id, username, password, created_at, updated_at
 FROM
-    users
+    USERS
 WHERE
-    id = $1
+    ID = $1
 LIMIT
     1
 `
@@ -39,9 +39,9 @@ const listUsers = `-- name: ListUsers :many
 SELECT
     id, username, password, created_at, updated_at
 FROM
-    users
+    USERS
 ORDER BY
-    id
+    ID
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {

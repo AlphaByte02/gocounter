@@ -17,7 +17,7 @@ SELECT
 FROM
     GROUPS
 WHERE
-    id = $1
+    ID = $1
 LIMIT
     1
 `
@@ -40,7 +40,7 @@ SELECT
 FROM
     GROUPS
 ORDER BY
-    id
+    ID
 `
 
 func (q *Queries) ListGroups(ctx context.Context) ([]Group, error) {

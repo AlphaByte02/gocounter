@@ -1,20 +1,22 @@
-import generouted from "@generouted/react-router/plugin";
-import react from "@vitejs/plugin-react-swc";
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
+import solid from "vite-plugin-solid";
 
-// https://vitejs.dev/config/
 export default defineConfig({
-    plugins: [react(), generouted()],
+    plugins: [tailwindcss(), solid()],
     server: {
         proxy: {
-            "/api": "http://localhost:8080",
+            "/api": {
+                target: "http://localhost:8080",
+                changeOrigin: true,
+            },
         },
     },
     resolve: {
         alias: {
             "@": "/src",
-            "@components": "/src/components",
-            "@lib": "/src/lib",
+            "@/components": "/src/components",
+            "@/lib": "/src/lib",
         },
     },
 });

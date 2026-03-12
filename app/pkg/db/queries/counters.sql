@@ -2,121 +2,127 @@
 SELECT
   *
 FROM
-  counters
+  COUNTERS
 WHERE
-  id = $1
+  ID = $1
 LIMIT
   1;
+
 
 -- name: ListCounters :many
 SELECT
   *
 FROM
-  counters
+  COUNTERS
 ORDER BY
-  id;
+  ID;
+
 
 -- name: CreateCounter :one
 INSERT INTO
-  counters (id, user_id, name)
+  COUNTERS (ID, USER_ID, NAME)
 VALUES
   ($1, $2, $3)
 RETURNING
   *;
 
+
 -- name: UpdateCounter :one
-UPDATE counters
+UPDATE COUNTERS
 SET
-  name = $2,
-  user_id = $3
+  NAME = $2,
+  USER_ID = $3
 WHERE
-  id = $1
+  ID = $1
 RETURNING
   *;
 
+
 -- name: DeleteCounter :exec
-DELETE FROM counters
+DELETE FROM COUNTERS
 WHERE
-  id = $1;
+  ID = $1;
+
 
 -- name: ListCountersByUser :many
 SELECT
   *
 FROM
-  counters
+  COUNTERS
 WHERE
-  user_id = $1
+  USER_ID = $1
 ORDER BY
-  id;
+  ID;
 
--- name: GetCounterStatsGlobal :one
-WITH
-  Aggr AS (
-    SELECT
-      SUM(VALUE) AS total,
-      MIN(recorded_at) AS first_date
-    FROM
-      data
-    WHERE
-      counter_id = $1
-  ),
-  TimeCalc AS (
-    SELECT
-      total,
-      first_date,
-      CEIL(
-        EXTRACT(
-          epoch
-          FROM
-            (NOW() - first_date)
-        ) / 86400.0
-      ) AS days
-    FROM
-      Aggr
-    WHERE
-      first_date IS NOT NULL
-  )
-SELECT
-  ct.total,
-  ct.days,
-  (ct.total / COALESCE(ct.days, 1))::float AS avg
-FROM
-  TimeCalc ct;
 
 -- name: GetCounterStats :one
 WITH
-  Aggr AS (
+  AGGR AS (
     SELECT
-      SUM(VALUE) AS total,
-      COALESCE(counters.soft_reset, MIN(recorded_at)) AS first_date
+      SUM(VALUE) AS TOTAL,
+      MIN(RECORDED_AT) AS FIRST_DATE
     FROM
-      data
-      JOIN counters ON data.counter_id = counters.id
+      DATA
     WHERE
-      counter_id = $1
-      AND recorded_at >= counters.soft_reset
-    GROUP BY
-      counters.soft_reset
+      COUNTER_ID = $1
   ),
-  TimeCalc AS (
+  TIMECALC AS (
     SELECT
-      total,
-      first_date,
+      TOTAL,
+      FIRST_DATE,
       CEIL(
         EXTRACT(
-          epoch
+          EPOCH
           FROM
-            (NOW() - first_date)
+            (NOW() - FIRST_DATE)
         ) / 86400.0
-      ) AS days
+      ) AS DAYS
     FROM
-      Aggr
+      AGGR
     WHERE
-      first_date IS NOT NULL
+      FIRST_DATE IS NOT NULL
   )
 SELECT
-  ct.total,
-  ct.days,
-  (ct.total / COALESCE(ct.days, 1))::float AS avg
+  CT.TOTAL,
+  CT.DAYS,
+  (CT.TOTAL / COALESCE(CT.DAYS, 1))::float AS AVG
 FROM
-  TimeCalc ct;
+  TIMECALC CT;
+
+
+-- name: GetCounterStatsSince :one
+WITH
+  AGGR AS (
+    SELECT
+      SUM(VALUE) AS TOTAL,
+      MIN(RECORDED_AT) AS FIRST_DATE
+    FROM
+      DATA
+    WHERE
+      COUNTER_ID = $1
+      AND /* sql-formatter-disable */
+      EXTRACT(year from RECORDED_AT) >= @from_year::int
+      /* sql-formatter-enable */
+  ),
+  TIMECALC AS (
+    SELECT
+      TOTAL,
+      FIRST_DATE,
+      CEIL(
+        EXTRACT(
+          EPOCH
+          FROM
+            (NOW() - FIRST_DATE)
+        ) / 86400.0
+      ) AS DAYS
+    FROM
+      AGGR
+    WHERE
+      FIRST_DATE IS NOT NULL
+  )
+SELECT
+  CT.TOTAL,
+  CT.DAYS,
+  (CT.TOTAL / COALESCE(CT.DAYS, 1))::float AS AVG
+FROM
+  TIMECALC CT;

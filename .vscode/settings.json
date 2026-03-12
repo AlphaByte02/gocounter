@@ -1,6 +1,4 @@
 {
-    "eslint.useFlatConfig": true,
-
     "go.formatTool": "custom",
     "go.alternateTools": {
         "customFormatter": "golines"
@@ -9,5 +7,12 @@
     "go.inlayHints.constantValues": true,
 
     "SQL-Formatter-VSCode.dialect": "postgresql",
-    "SQL-Formatter-VSCode.keywordCase": "preserve"
+    "SQL-Formatter-VSCode.keywordCase": "preserve",
+
+    "biome.configurationPath": "web/biome.json",
+    "biome.enabled": true,
+    "biome.lsp.bin": "web/node_modules/.bin/biome",
+    "[html][javascript][javascriptreact][json][jsonc][markdown][typescript][typescriptreact][dockercompose][css][less]": {
+        "editor.defaultFormatter": "biomejs.biome"
+    }
 }

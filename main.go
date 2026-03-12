@@ -43,9 +43,7 @@ func main() {
 	queries := db.New(pool)
 
 	proxyHeader := Configs.String("general.proxyHeader")
-	app := fiber.New(fiber.Config{
-		ProxyHeader: proxyHeader,
-	})
+	app := fiber.New(fiber.Config{ProxyHeader: proxyHeader})
 	app.Use(logger.New())
 
 	app.Use(func(c fiber.Ctx) error {

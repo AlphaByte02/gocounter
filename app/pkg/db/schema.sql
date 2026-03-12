@@ -1,62 +1,65 @@
-CREATE TYPE counter_visibility AS ENUM('global', 'group', 'private');
+CREATE TYPE COUNTER_VISIBILITY AS ENUM('global', 'group', 'private');
 
-CREATE TYPE counter_edit_policy AS ENUM('everyone', 'owner_only');
 
-CREATE TABLE
-    groups (
-        id UUID PRIMARY KEY,
-        name TEXT NOT NULL UNIQUE,
-        created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
-        updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
-    );
+CREATE TYPE COUNTER_EDIT_POLICY AS ENUM('everyone', 'owner_only');
 
-CREATE TABLE
-    users (
-        id UUID PRIMARY KEY,
-        username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
-        updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
-    );
 
-CREATE TABLE
-    group_users (
-        user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-        group_id UUID NOT NULL REFERENCES groups (id) ON DELETE CASCADE,
-        joined_at TIMESTAMPTZ DEFAULT now() NOT NULL,
-        PRIMARY KEY (user_id, group_id)
-    );
+CREATE TABLE GROUPS (
+    ID UUID PRIMARY KEY,
+    NAME TEXT NOT NULL UNIQUE,
+    CREATED_AT TIMESTAMPTZ DEFAULT now() NOT NULL,
+    UPDATED_AT TIMESTAMPTZ DEFAULT now() NOT NULL
+);
 
-CREATE INDEX idx_user_groups_user_id ON group_users (user_id);
 
-CREATE INDEX idx_user_groups_group_id ON group_users (group_id);
+CREATE TABLE USERS (
+    ID UUID PRIMARY KEY,
+    USERNAME TEXT NOT NULL UNIQUE,
+    PASSWORD TEXT NOT NULL,
+    CREATED_AT TIMESTAMPTZ DEFAULT now() NOT NULL,
+    UPDATED_AT TIMESTAMPTZ DEFAULT now() NOT NULL
+);
 
-CREATE TABLE
-    counters (
-        id UUID PRIMARY KEY,
-        user_id UUID REFERENCES users (id) ON DELETE CASCADE,
-        name TEXT NOT NULL UNIQUE,
-        soft_reset TIMESTAMPTZ DEFAULT NULL,
-        visibility counter_visibility NOT NULL DEFAULT 'private',
-        edit_policy counter_edit_policy NOT NULL DEFAULT 'owner_only',
-        created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
-        updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
-    );
 
-CREATE INDEX idx_counters_soft_reset ON counters (soft_reset);
+CREATE TABLE GROUP_USERS (
+    USER_ID UUID NOT NULL REFERENCES USERS (ID) ON DELETE CASCADE,
+    GROUP_ID UUID NOT NULL REFERENCES GROUPS (ID) ON DELETE CASCADE,
+    JOINED_AT TIMESTAMPTZ DEFAULT now() NOT NULL,
+    PRIMARY KEY (USER_ID, GROUP_ID)
+);
 
-CREATE INDEX idx_counters_user_id ON counters (user_id);
 
-CREATE TABLE
-    data (
-        id UUID PRIMARY KEY,
-        counter_id UUID NOT NULL REFERENCES counters (id) ON DELETE CASCADE,
-        value INTEGER NOT NULL,
-        recorded_at TIMESTAMPTZ DEFAULT now() NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
-        updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
-    );
+CREATE INDEX IDX_USER_GROUPS_USER_ID ON GROUP_USERS (USER_ID);
 
-CREATE INDEX idx_data_recorded_at ON data (recorded_at);
 
-CREATE INDEX idx_data_counter_id ON data (counter_id);
+CREATE INDEX IDX_USER_GROUPS_GROUP_ID ON GROUP_USERS (GROUP_ID);
+
+
+CREATE TABLE COUNTERS (
+    ID UUID PRIMARY KEY,
+    USER_ID UUID REFERENCES USERS (ID) ON DELETE CASCADE,
+    NAME TEXT NOT NULL UNIQUE,
+    VISIBILITY COUNTER_VISIBILITY NOT NULL DEFAULT 'private',
+    EDIT_POLICY COUNTER_EDIT_POLICY NOT NULL DEFAULT 'owner_only',
+    CREATED_AT TIMESTAMPTZ DEFAULT now() NOT NULL,
+    UPDATED_AT TIMESTAMPTZ DEFAULT now() NOT NULL
+);
+
+
+CREATE INDEX IDX_COUNTERS_USER_ID ON COUNTERS (USER_ID);
+
+
+CREATE TABLE DATA (
+    ID UUID PRIMARY KEY,
+    COUNTER_ID UUID NOT NULL REFERENCES COUNTERS (ID) ON DELETE CASCADE,
+    VALUE INTEGER NOT NULL,
+    RECORDED_AT TIMESTAMPTZ DEFAULT now() NOT NULL,
+    CREATED_AT TIMESTAMPTZ DEFAULT now() NOT NULL,
+    UPDATED_AT TIMESTAMPTZ DEFAULT now() NOT NULL
+);
+
+
+CREATE INDEX IDX_DATA_RECORDED_AT ON DATA (RECORDED_AT);
+
+
+CREATE INDEX IDX_DATA_COUNTER_ID ON DATA (COUNTER_ID);

@@ -19,62 +19,8 @@ export function isEmpty(element: unknown) {
     }
 }
 
-export function daysInMonth(month?: number, year?: number): number {
-    const now = new Date();
-    if (!year) {
-        year = now.getFullYear();
-    }
-    if (!month) {
-        month = now.getMonth();
-    }
-
-    return new Date(year, month + 1, 0).getDate();
-}
-
-export function isLeapYear(year: number) {
-    return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-}
-
-export function daysInYear(year: number) {
-    return isLeapYear(year) ? 366 : 365;
-}
-
 export function roundDecimal(num: number, n: number = 1): number {
     return Math.round(num * 10 ** n) / 10 ** n;
-}
-
-export function dateRange(startDate: Date | string, endDate: Date | string, steps = 1, useUTC = false) {
-    const dateArray = [];
-
-    if (!(startDate instanceof Date)) {
-        startDate = new Date(startDate);
-    }
-    if (useUTC) {
-        startDate.setUTCHours(0, 0, 0, 0);
-    } else {
-        startDate.setHours(0, 0, 0, 0);
-    }
-    const currentDate = startDate;
-
-    if (!(endDate instanceof Date)) {
-        endDate = new Date(endDate);
-    }
-    if (useUTC) {
-        endDate.setUTCHours(0, 0, 0, 0);
-    } else {
-        endDate.setHours(0, 0, 0, 0);
-    }
-
-    while (currentDate <= endDate) {
-        dateArray.push(new Date(currentDate));
-        if (useUTC) {
-            currentDate.setUTCDate(currentDate.getUTCDate() + steps);
-        } else {
-            currentDate.setDate(currentDate.getDate() + steps);
-        }
-    }
-
-    return dateArray;
 }
 
 function gcd(a: number, b: number): number {

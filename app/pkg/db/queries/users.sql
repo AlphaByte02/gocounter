@@ -2,16 +2,17 @@
 SELECT
     *
 FROM
-    users
+    USERS
 WHERE
-    id = $1
+    ID = $1
 LIMIT
     1;
+
 
 -- name: ListUsers :many
 SELECT
     *
 FROM
-    users
+    USERS
 ORDER BY
-    id;
+    ID;

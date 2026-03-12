@@ -4,9 +4,10 @@ SELECT
 FROM
     DATA
 WHERE
-    id = $1
+    ID = $1
 LIMIT
     1;
+
 
 -- name: ListData :many
 SELECT
@@ -14,27 +15,21 @@ SELECT
 FROM
     DATA
 ORDER BY
-    id;
+    ID;
 
--- name: ListDataNoGlobal :many
-WITH
-    min_reset AS (
-        SELECT
-            MIN(soft_reset) AS value
-        FROM
-            counters
-        WHERE
-            soft_reset IS NOT NULL
-    )
+
+-- name: ListDataSince :many
 SELECT
-    data.*
+    *
 FROM
-    data,
-    min_reset
+    DATA
 WHERE
-    recorded_at > COALESCE(min_reset.value, to_timestamp(0))
+    /* sql-formatter-disable */
+    EXTRACT(year from RECORDED_AT) >= @from_year::int
+    /* sql-formatter-enable */
 ORDER BY
-    id;
+    ID;
+
 
 -- name: ListDataFeed :many
 SELECT
@@ -42,44 +37,49 @@ SELECT
 FROM
     DATA
 ORDER BY
-    recorded_at DESC,
-    id DESC
+    RECORDED_AT DESC,
+    ID DESC
 LIMIT
     $1
 OFFSET
     $2;
 
+
 -- name: DeleteData :exec
 DELETE FROM DATA
 WHERE
-    id = $1;
+    ID = $1;
+
 
 -- name: CreateData :one
 INSERT INTO
-    data (id, counter_id, value, recorded_at)
+    DATA (ID, COUNTER_ID, VALUE, RECORDED_AT)
 VALUES
     ($1, $2, $3, $4)
 RETURNING
     *;
 
--- name: ListDataByCounter :many
-SELECT
-    data.*
-FROM
-    DATA
-    JOIN counters ON data.counter_id = counters.id
-WHERE
-    counter_id = $1
-    AND recorded_at >= counters.soft_reset
-ORDER BY
-    data.id;
 
--- name: ListDataByCounterGlobal :many
+-- name: ListDataByCounter :many
 SELECT
     *
 FROM
     DATA
 WHERE
-    counter_id = $1
+    COUNTER_ID = $1
 ORDER BY
-    id;
+    ID;
+
+
+-- name: ListDataByCounterSince :many
+SELECT
+    *
+FROM
+    DATA
+WHERE
+    COUNTER_ID = $1
+    AND /* sql-formatter-disable */
+    EXTRACT(year from RECORDED_AT) >= @from_year::int
+    /* sql-formatter-enable */
+ORDER BY
+    ID;

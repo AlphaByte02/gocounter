@@ -1,11 +1,23 @@
-import { Routes } from "@generouted/react-router";
-import React from "react";
-import ReactDOM from "react-dom/client";
+import { Route, Router } from "@solidjs/router";
+import { render } from "solid-js/web";
 
-import "@/styles/main.css";
+import "@/styles/index.css";
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-    <React.StrictMode>
-        <Routes />
-    </React.StrictMode>
+import Index, { homePreload } from "@/routes/home";
+import Feed, { feedPreload } from "@/routes/feed";
+
+const root = document.getElementById("root");
+
+if (!root) {
+    throw new Error("Root div not found");
+}
+
+render(
+    () => (
+        <Router>
+            <Route path="/" component={Index} preload={homePreload} />
+            <Route path="/feed" component={Feed} preload={feedPreload} />
+        </Router>
+    ),
+    root,
 );

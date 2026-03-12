@@ -13,11 +13,11 @@ import (
 
 const createCounter = `-- name: CreateCounter :one
 INSERT INTO
-  counters (id, user_id, name)
+  COUNTERS (ID, USER_ID, NAME)
 VALUES
   ($1, $2, $3)
 RETURNING
-  id, user_id, name, soft_reset, visibility, edit_policy, created_at, updated_at
+  id, user_id, name, visibility, edit_policy, created_at, updated_at
 `
 
 type CreateCounterParams struct {
@@ -33,7 +33,6 @@ func (q *Queries) CreateCounter(ctx context.Context, arg CreateCounterParams) (C
 		&i.ID,
 		&i.UserID,
 		&i.Name,
-		&i.SoftReset,
 		&i.Visibility,
 		&i.EditPolicy,
 		&i.CreatedAt,
@@ -43,9 +42,9 @@ func (q *Queries) CreateCounter(ctx context.Context, arg CreateCounterParams) (C
 }
 
 const deleteCounter = `-- name: DeleteCounter :exec
-DELETE FROM counters
+DELETE FROM COUNTERS
 WHERE
-  id = $1
+  ID = $1
 `
 
 func (q *Queries) DeleteCounter(ctx context.Context, id uuid.UUID) error {
@@ -55,11 +54,11 @@ func (q *Queries) DeleteCounter(ctx context.Context, id uuid.UUID) error {
 
 const getCounter = `-- name: GetCounter :one
 SELECT
-  id, user_id, name, soft_reset, visibility, edit_policy, created_at, updated_at
+  id, user_id, name, visibility, edit_policy, created_at, updated_at
 FROM
-  counters
+  COUNTERS
 WHERE
-  id = $1
+  ID = $1
 LIMIT
   1
 `
@@ -71,7 +70,6 @@ func (q *Queries) GetCounter(ctx context.Context, id uuid.UUID) (Counter, error)
 		&i.ID,
 		&i.UserID,
 		&i.Name,
-		&i.SoftReset,
 		&i.Visibility,
 		&i.EditPolicy,
 		&i.CreatedAt,
@@ -82,41 +80,37 @@ func (q *Queries) GetCounter(ctx context.Context, id uuid.UUID) (Counter, error)
 
 const getCounterStats = `-- name: GetCounterStats :one
 WITH
-  Aggr AS (
+  AGGR AS (
     SELECT
-      SUM(VALUE) AS total,
-      COALESCE(counters.soft_reset, MIN(recorded_at)) AS first_date
+      SUM(VALUE) AS TOTAL,
+      MIN(RECORDED_AT) AS FIRST_DATE
     FROM
-      data
-      JOIN counters ON data.counter_id = counters.id
+      DATA
     WHERE
-      counter_id = $1
-      AND recorded_at >= counters.soft_reset
-    GROUP BY
-      counters.soft_reset
+      COUNTER_ID = $1
   ),
-  TimeCalc AS (
+  TIMECALC AS (
     SELECT
-      total,
-      first_date,
+      TOTAL,
+      FIRST_DATE,
       CEIL(
         EXTRACT(
-          epoch
+          EPOCH
           FROM
-            (NOW() - first_date)
+            (NOW() - FIRST_DATE)
         ) / 86400.0
-      ) AS days
+      ) AS DAYS
     FROM
-      Aggr
+      AGGR
     WHERE
-      first_date IS NOT NULL
+      FIRST_DATE IS NOT NULL
   )
 SELECT
-  ct.total,
-  ct.days,
-  (ct.total / COALESCE(ct.days, 1))::float AS avg
+  CT.TOTAL,
+  CT.DAYS,
+  (CT.TOTAL / COALESCE(CT.DAYS, 1))::float AS AVG
 FROM
-  TimeCalc ct
+  TIMECALC CT
 `
 
 type GetCounterStatsRow struct {
@@ -132,61 +126,69 @@ func (q *Queries) GetCounterStats(ctx context.Context, counterID uuid.UUID) (Get
 	return i, err
 }
 
-const getCounterStatsGlobal = `-- name: GetCounterStatsGlobal :one
+const getCounterStatsSince = `-- name: GetCounterStatsSince :one
 WITH
-  Aggr AS (
+  AGGR AS (
     SELECT
-      SUM(VALUE) AS total,
-      MIN(recorded_at) AS first_date
+      SUM(VALUE) AS TOTAL,
+      MIN(RECORDED_AT) AS FIRST_DATE
     FROM
-      data
+      DATA
     WHERE
-      counter_id = $1
+      COUNTER_ID = $1
+      AND /* sql-formatter-disable */
+      EXTRACT(year from RECORDED_AT) >= $2::int
+      /* sql-formatter-enable */
   ),
-  TimeCalc AS (
+  TIMECALC AS (
     SELECT
-      total,
-      first_date,
+      TOTAL,
+      FIRST_DATE,
       CEIL(
         EXTRACT(
-          epoch
+          EPOCH
           FROM
-            (NOW() - first_date)
+            (NOW() - FIRST_DATE)
         ) / 86400.0
-      ) AS days
+      ) AS DAYS
     FROM
-      Aggr
+      AGGR
     WHERE
-      first_date IS NOT NULL
+      FIRST_DATE IS NOT NULL
   )
 SELECT
-  ct.total,
-  ct.days,
-  (ct.total / COALESCE(ct.days, 1))::float AS avg
+  CT.TOTAL,
+  CT.DAYS,
+  (CT.TOTAL / COALESCE(CT.DAYS, 1))::float AS AVG
 FROM
-  TimeCalc ct
+  TIMECALC CT
 `
 
-type GetCounterStatsGlobalRow struct {
+type GetCounterStatsSinceParams struct {
+	CounterID uuid.UUID `json:"counter_id"`
+	FromYear  int32     `json:"from_year"`
+}
+
+type GetCounterStatsSinceRow struct {
 	Total int64   `json:"total"`
 	Days  float64 `json:"days"`
 	Avg   float64 `json:"avg"`
 }
 
-func (q *Queries) GetCounterStatsGlobal(ctx context.Context, counterID uuid.UUID) (GetCounterStatsGlobalRow, error) {
-	row := q.db.QueryRow(ctx, getCounterStatsGlobal, counterID)
-	var i GetCounterStatsGlobalRow
+func (q *Queries) GetCounterStatsSince(ctx context.Context, arg GetCounterStatsSinceParams) (GetCounterStatsSinceRow, error) {
+	row := q.db.QueryRow(ctx, getCounterStatsSince, arg.CounterID, arg.FromYear)
+	var i GetCounterStatsSinceRow
 	err := row.Scan(&i.Total, &i.Days, &i.Avg)
 	return i, err
 }
 
 const listCounters = `-- name: ListCounters :many
 SELECT
-  id, user_id, name, soft_reset, visibility, edit_policy, created_at, updated_at
+  id, user_id, name, visibility, edit_policy, created_at, updated_at
 FROM
-  counters
+  COUNTERS
 ORDER BY
-  id
+  ID
 `
 
 func (q *Queries) ListCounters(ctx context.Context) ([]Counter, error) {
@@ -202,7 +204,6 @@ func (q *Queries) ListCounters(ctx context.Context) ([]Counter, error) {
 			&i.ID,
 			&i.UserID,
 			&i.Name,
-			&i.SoftReset,
 			&i.Visibility,
 			&i.EditPolicy,
 			&i.CreatedAt,
@@ -220,13 +221,13 @@ func (q *Queries) ListCounters(ctx context.Context) ([]Counter, error) {
 
 const listCountersByUser = `-- name: ListCountersByUser :many
 SELECT
-  id, user_id, name, soft_reset, visibility, edit_policy, created_at, updated_at
+  id, user_id, name, visibility, edit_policy, created_at, updated_at
 FROM
-  counters
+  COUNTERS
 WHERE
-  user_id = $1
+  USER_ID = $1
 ORDER BY
-  id
+  ID
 `
 
 func (q *Queries) ListCountersByUser(ctx context.Context, userID *uuid.UUID) ([]Counter, error) {
@@ -242,7 +243,6 @@ func (q *Queries) ListCountersByUser(ctx context.Context, userID *uuid.UUID) ([]
 			&i.ID,
 			&i.UserID,
 			&i.Name,
-			&i.SoftReset,
 			&i.Visibility,
 			&i.EditPolicy,
 			&i.CreatedAt,
@@ -259,14 +259,14 @@ func (q *Queries) ListCountersByUser(ctx context.Context, userID *uuid.UUID) ([]
 }
 
 const updateCounter = `-- name: UpdateCounter :one
-UPDATE counters
+UPDATE COUNTERS
 SET
-  name = $2,
-  user_id = $3
+  NAME = $2,
+  USER_ID = $3
 WHERE
-  id = $1
+  ID = $1
 RETURNING
-  id, user_id, name, soft_reset, visibility, edit_policy, created_at, updated_at
+  id, user_id, name, visibility, edit_policy, created_at, updated_at
 `
 
 type UpdateCounterParams struct {
@@ -282,7 +282,6 @@ func (q *Queries) UpdateCounter(ctx context.Context, arg UpdateCounterParams) (C
 		&i.ID,
 		&i.UserID,
 		&i.Name,
-		&i.SoftReset,
 		&i.Visibility,
 		&i.EditPolicy,
 		&i.CreatedAt,

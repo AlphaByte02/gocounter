@@ -4,9 +4,10 @@ SELECT
 FROM
     GROUPS
 WHERE
-    id = $1
+    ID = $1
 LIMIT
     1;
+
 
 -- name: ListGroups :many
 SELECT
@@ -14,4 +15,4 @@ SELECT
 FROM
     GROUPS
 ORDER BY
-    id;
+    ID;

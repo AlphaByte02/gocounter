@@ -14,7 +14,7 @@ import (
 
 const createData = `-- name: CreateData :one
 INSERT INTO
-    data (id, counter_id, value, recorded_at)
+    DATA (ID, COUNTER_ID, VALUE, RECORDED_AT)
 VALUES
     ($1, $2, $3, $4)
 RETURNING
@@ -50,7 +50,7 @@ func (q *Queries) CreateData(ctx context.Context, arg CreateDataParams) (Datum, 
 const deleteData = `-- name: DeleteData :exec
 DELETE FROM DATA
 WHERE
-    id = $1
+    ID = $1
 `
 
 func (q *Queries) DeleteData(ctx context.Context, id uuid.UUID) error {
@@ -64,7 +64,7 @@ SELECT
 FROM
     DATA
 WHERE
-    id = $1
+    ID = $1
 LIMIT
     1
 `
@@ -89,7 +89,7 @@ SELECT
 FROM
     DATA
 ORDER BY
-    id
+    ID
 `
 
 func (q *Queries) ListData(ctx context.Context) ([]Datum, error) {
@@ -121,15 +121,13 @@ func (q *Queries) ListData(ctx context.Context) ([]Datum, error) {
 
 const listDataByCounter = `-- name: ListDataByCounter :many
 SELECT
-    data.id, data.counter_id, data.value, data.recorded_at, data.created_at, data.updated_at
+    id, counter_id, value, recorded_at, created_at, updated_at
 FROM
     DATA
-    JOIN counters ON data.counter_id = counters.id
 WHERE
-    counter_id = $1
-    AND recorded_at >= counters.soft_reset
+    COUNTER_ID = $1
 ORDER BY
-    data.id
+    ID
 `
 
 func (q *Queries) ListDataByCounter(ctx context.Context, counterID uuid.UUID) ([]Datum, error) {
@@ -159,19 +157,27 @@ func (q *Queries) ListDataByCounter(ctx context.Context, counterID uuid.UUID) ([
 	return items, nil
 }
 
-const listDataByCounterGlobal = `-- name: ListDataByCounterGlobal :many
+const listDataByCounterSince = `-- name: ListDataByCounterSince :many
 SELECT
     id, counter_id, value, recorded_at, created_at, updated_at
 FROM
     DATA
 WHERE
-    counter_id = $1
+    COUNTER_ID = $1
+    AND /* sql-formatter-disable */
+    EXTRACT(year from RECORDED_AT) >= $2::int
+    /* sql-formatter-enable */
 ORDER BY
-    id
+    ID
 `
 
-func (q *Queries) ListDataByCounterGlobal(ctx context.Context, counterID uuid.UUID) ([]Datum, error) {
-	rows, err := q.db.Query(ctx, listDataByCounterGlobal, counterID)
+type ListDataByCounterSinceParams struct {
+	CounterID uuid.UUID `json:"counter_id"`
+	FromYear  int32     `json:"from_year"`
+}
+
+func (q *Queries) ListDataByCounterSince(ctx context.Context, arg ListDataByCounterSinceParams) ([]Datum, error) {
+	rows, err := q.db.Query(ctx, listDataByCounterSince, arg.CounterID, arg.FromYear)
 	if err != nil {
 		return nil, err
 	}
@@ -203,8 +209,8 @@ SELECT
 FROM
     DATA
 ORDER BY
-    recorded_at DESC,
-    id DESC
+    RECORDED_AT DESC,
+    ID DESC
 LIMIT
     $1
 OFFSET
@@ -243,29 +249,21 @@ func (q *Queries) ListDataFeed(ctx context.Context, arg ListDataFeedParams) ([]D
 	return items, nil
 }
 
-const listDataNoGlobal = `-- name: ListDataNoGlobal :many
-WITH
-    min_reset AS (
-        SELECT
-            MIN(soft_reset) AS value
-        FROM
-            counters
-        WHERE
-            soft_reset IS NOT NULL
-    )
+const listDataSince = `-- name: ListDataSince :many
 SELECT
-    data.id, data.counter_id, data.value, data.recorded_at, data.created_at, data.updated_at
+    id, counter_id, value, recorded_at, created_at, updated_at
 FROM
-    data,
-    min_reset
+    DATA
 WHERE
-    recorded_at > COALESCE(min_reset.value, to_timestamp(0))
+    /* sql-formatter-disable */
+    EXTRACT(year from RECORDED_AT) >= $1::int
+    /* sql-formatter-enable */
 ORDER BY
-    id
+    ID
 `
 
-func (q *Queries) ListDataNoGlobal(ctx context.Context) ([]Datum, error) {
-	rows, err := q.db.Query(ctx, listDataNoGlobal)
+func (q *Queries) ListDataSince(ctx context.Context, fromYear int32) ([]Datum, error) {
+	rows, err := q.db.Query(ctx, listDataSince, fromYear)
 	if err != nil {
 		return nil, err
 	}

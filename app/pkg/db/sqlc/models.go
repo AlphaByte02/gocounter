@@ -101,7 +101,6 @@ type Counter struct {
 	ID         uuid.UUID          `json:"id"`
 	UserID     *uuid.UUID         `json:"user_id"`
 	Name       string             `json:"name"`
-	SoftReset  pgtype.Timestamptz `json:"soft_reset"`
 	Visibility CounterVisibility  `json:"visibility"`
 	EditPolicy CounterEditPolicy  `json:"edit_policy"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
