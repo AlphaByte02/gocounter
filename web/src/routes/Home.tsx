@@ -58,13 +58,20 @@ const Home: Component = () => {
                 <header class="mb-12 text-center">
                     <h1 class="font-display font-extrabold text-4xl text-text-primary tracking-tight mb-1">counters</h1>
                     <p class="text-muted text-sm font-body">traccia quello che vuoi</p>
-                    <div class="mt-4">
+                    <div class="mt-4 flex items-center justify-center gap-3">
                         <A
                             href="/feed"
                             class="text-xs text-muted hover:text-accent transition-colors font-body border border-border hover:border-accent/40 px-3 py-1.5 rounded-full inline-flex items-center gap-1.5"
                         >
                             <span class="w-1.5 h-1.5 rounded-full bg-muted inline-block" />
                             feed
+                        </A>
+                        <A
+                            href="/all"
+                            class="text-xs text-muted hover:text-accent transition-colors font-body border border-border hover:border-accent/40 px-3 py-1.5 rounded-full inline-flex items-center gap-1.5"
+                        >
+                            <span class="w-1.5 h-1.5 rounded-full bg-muted inline-block" />
+                            andamento
                         </A>
                     </div>
                 </header>
