@@ -31,7 +31,8 @@
     },
     "html": {
         "formatter": {
-            "enabled": true
+            "enabled": true,
+            "indentScriptAndStyle": true
         }
     },
     "css": {

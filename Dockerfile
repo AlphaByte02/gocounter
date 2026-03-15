@@ -1,15 +1,13 @@
-# Stage  1: Build the React application
-FROM node:lts-alpine AS build-react
-
-RUN corepack enable
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+# Stage  1: Build the Web application
+FROM oven/bun:1 AS build-web
 
 WORKDIR /app
 
+ENV NODE_ENV=production
+
 COPY ./web ./
-RUN pnpm install
-RUN pnpm run build
+RUN bun install --frozen-lockfile
+RUN bun run build
 
 # Stage  2: Build the Go application
 FROM golang:1.24-alpine AS build-go
@@ -27,8 +25,8 @@ WORKDIR /app
 # Copy the Go binary from the build-go stage
 COPY --from=build-go /app/main /app/
 
-# Copy the React build output from the build-react stage
-COPY --from=build-react /app/dist /app/web/dist
+# Copy the Web build output from the build-web stage
+COPY --from=build-web /app/dist /app/web/dist
 
 COPY .env*.yml ./
 
