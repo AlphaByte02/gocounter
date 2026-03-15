@@ -10,7 +10,7 @@ RUN bun install --frozen-lockfile
 RUN bun run build
 
 # Stage  2: Build the Go application
-FROM golang:1.24-alpine AS build-go
+FROM golang:1.26-alpine AS build-go
 WORKDIR /app
 COPY ./app ./app
 COPY ./go.* ./
