@@ -39,19 +39,12 @@ export function byMonth(items: Data[]): MonthChartData {
     let cumulativeMonths = 0;
     const now = new Date();
 
-    // Ordina per chiave cronologica
-    const sorted = [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-
-    for (const [, { total, firstDay, year, month }] of sorted) {
+    for (const [, { total, year, month }] of map.entries()) {
         labels.push(`${MONTHS_IT[month]} ${year}`);
         totals.push(total);
 
         const isCurrentMonth = now.getMonth() === month && now.getFullYear() === year;
-        const numDays = isCurrentMonth
-            ? now.getDate()
-            : cumulativeMonths === 0
-              ? daysInMonth(month, year) - firstDay + 1
-              : daysInMonth(month, year);
+        const numDays = isCurrentMonth ? now.getDate() : daysInMonth(month, year);
 
         avgs.push(roundDecimal(total / numDays, 2));
 
@@ -95,20 +88,19 @@ export function byYear(items: Data[]): YearChartData | null {
     const avgs: number[] = [];
     const now = new Date();
 
-    const sorted = [...map.entries()].sort(([a], [b]) => a - b);
-    for (const [year, { total }] of sorted) {
+    for (const [year, { total }] of map.entries()) {
         labels.push(String(year));
         totals.push(total);
 
         let days: number;
         if (year === now.getFullYear()) {
-            const firstDay = year === firstDate!.getFullYear() ? firstDate! : new Date(year, 0, 1);
-            days = Math.floor((+now - +firstDay) / 86400000) + 1;
-        } else if (year === firstDate!.getFullYear()) {
+            const firstDay = year === firstDate?.getFullYear() ? firstDate : new Date(year, 0, 1);
+            days = Math.floor((+now - +firstDay) / (1000 * 60 * 60 * 24)) + 1;
+        } else if (year === firstDate?.getFullYear()) {
             const lastDay = new Date(year, 11, 31);
-            days = Math.max(1, Math.floor((+lastDay - +firstDate!) / 86400000) + 1);
+            days = Math.max(1, Math.floor((+lastDay - +firstDate) / (1000 * 60 * 60 * 24)) + 1);
         } else {
-            days = daysInYear(year) as unknown as number;
+            days = daysInYear(year);
         }
 
         avgs.push(roundDecimal(total / days, 2));

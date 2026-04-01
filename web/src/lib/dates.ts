@@ -55,10 +55,10 @@ export function dateRange(startDate: Date | string, endDate: Date | string, step
 
 export function daysInMonth(month?: number, year?: number): number {
     const now = new Date();
-    if (!year) {
+    if (year === undefined) {
         year = now.getFullYear();
     }
-    if (!month) {
+    if (month === undefined) {
         month = now.getMonth();
     }
 

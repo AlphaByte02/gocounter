@@ -2,6 +2,7 @@ import type { Data } from "@/types";
 import type { Component } from "solid-js";
 
 import { A, createAsync } from "@solidjs/router";
+import dayjs from "dayjs";
 import { For, Show, createMemo } from "solid-js";
 
 import { getCounters, getFeed } from "@/lib/api";
@@ -47,12 +48,12 @@ function buildDayEntries(items: Data[], counterMap: Map<string, string>): DayEnt
     // Group by day
     const byDay = new Map<string, EnrichedItem[]>();
     for (const item of enriched) {
-        const key = item.recorded_at.slice(0, 10); // "YYYY-MM-DD"
+        const key = dayjs(item.recorded_at).format("YYYY-MM-DD");
         if (!byDay.has(key)) byDay.set(key, []);
-        byDay.get(key)!.push(item);
+        byDay.get(key)?.push(item);
     }
 
-    // For each day, group items within 10 min of each other
+    // For each day, group items within GROUP_TIME of each other
     const days: DayEntry[] = [];
     for (const [key, dayItems] of byDay) {
         const groups: TimeGroup[] = [];
@@ -72,7 +73,7 @@ function buildDayEntries(items: Data[], counterMap: Map<string, string>): DayEnt
 
         days.push({
             dateKey: key,
-            dateLabel: new Date(key + "T12:00:00").toLocaleDateString("it-IT", {
+            dateLabel: new Date(`${key}T12:00:00`).toLocaleDateString("it-IT", {
                 day: "numeric",
                 month: "short",
                 year: "numeric",
